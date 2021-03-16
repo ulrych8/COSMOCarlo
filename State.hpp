@@ -28,11 +28,10 @@ class State
 		nbCandidates = _nbCandidates; 
 		nbVoters = _nbVoters;
 		votersPreferences = _votersPreferences;
-		hashTable.resize(nbVoters);
 		for (int i = 0; i < nbCandidates; ++i)
 		{
 			candidatesLeft.push_back(i);
-			hashTable[i] = 1 << i;
+			hashTable.push_back( 1 << i );
 		}
 		srand (time(NULL));
 		//displayVec(hashTable);

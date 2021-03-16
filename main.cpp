@@ -71,11 +71,11 @@ int main(){
 
 	MCTS mcts;
 
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < nbCandidates-1; ++i)
 	{
-		std::cout << "start bestuct" << std::endl;
+		//std::cout << "start bestuct" << std::endl;
 		int move = mcts.BestMoveUCT(etat, 10);
-		std::cout << "selon uct le bset move to play is : " << move << std::endl;
+		//std::cout << "selon uct le bset move to play is : " << move << std::endl;
 		etat.addVoterToSequence(move);
 	}
 	std::cout << "The final sequence is ";

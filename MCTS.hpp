@@ -30,7 +30,7 @@ class MCTS
 	//MCTS(std::string score="Borda"){	}
 
 	int UCT(State s){
-		std::cout<<"yoho"<<std::endl;
+		//std::cout<<"yoho"<<std::endl;
 
 		if (s.terminal())
 		{
@@ -79,9 +79,9 @@ class MCTS
 		for (int i = 0; i < n; ++i)
 		{
 			State sTemp(s);
-			std::cout << "start uct" << std::endl;
+			//std::cout << "start uct" << std::endl;
 			UCT(sTemp);
-			std::cout<<"end"<<std::endl;
+			//std::cout<<"end"<<std::endl;
 		}
 		int best = 0;
 		double bestValue = infoTable[s.getHash()][2][0];
