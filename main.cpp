@@ -2,6 +2,8 @@
 #include <string>
 #include <algorithm>	//shuffle
 #include <stdlib.h>		//random
+#include <ctime>		//clock
+#include <fstream>		//file
 
 #include "State.hpp"
 #include "MCTS.hpp"
@@ -32,6 +34,19 @@ void MallowsModelGenerate(double phi, std::vector<std::vector<int>> &prefs, int 
 	}
 }
 
+void RandomPrefsGenerate(std::vector<std::vector<int>> &prefs, int const& nbCandidates, int const& nbVoters)
+{
+	std::vector<int> init;
+	for (int i = 0; i < nbCandidates; ++i){
+		init.push_back(i);
+	}
+	for (int i = 0; i < nbVoters; ++i)
+	{
+		std::random_shuffle(init.begin(), init.end());
+		prefs[i] = std::vector<int>(init);
+	}
+}
+
 void displayPrefs(std::vector<std::vector<int>> &prefs, int const& nbCandidates, int const& nbVoters) {
 	for (int i = 0; i < nbVoters; ++i)
 	{
@@ -47,44 +62,107 @@ int main(){
 	srand (time(NULL));
 
 
-	int const nbCandidates = 9;
-	int const nbVoters = 3;
-	double const phi = 0.2;
-	
-	/*std::vector<std::vector<int>> prefs { {1, 3, 2, 4, 0},
-										 {4, 3, 2, 1, 0},
-										 {2, 0, 3, 1, 4} };*/
+    int const nbCandidates = 8;
+	int const nbVoters = 4;
 
-	std::vector<std::vector<int>> prefs(nbVoters);
-	
-	std::cout << "start mallows" << std::endl;
+	int const nbPrefs = 100000;
+	int const UCTrepeat = 50;
 
-	MallowsModelGenerate(phi, prefs, nbCandidates, nbVoters );
-	std::cout << "show" << std::endl;
-	displayPrefs(prefs, nbCandidates, nbVoters);
+	std::vector<std::vector<int>> prefs(nbPrefs);
 
-	std::cout << " start mcts " << std::endl;
+	RandomPrefsGenerate(prefs, nbCandidates, nbPrefs);
 
-	State etat(nbCandidates, nbVoters, prefs);
 
-	std::cout << "State created" << std::endl;
+	State etat(nbCandidates, nbVoters, prefs, nbPrefs);
 
 	MCTS mcts;
-
-	for (int i = 0; i < nbCandidates-1; ++i)
+	std::cout << "nbCandidates : " << nbCandidates << std::endl;
+	std::cout << "nbVoters : " << nbVoters << std::endl;
+	for (int j = 0; j < nbCandidates-1; ++j)
 	{
-		//std::cout << "start bestuct" << std::endl;
-		int move = mcts.BestMoveUCT(etat, 10);
-		//std::cout << "selon uct le bset move to play is : " << move << std::endl;
+		std::cout << j << "/" << nbCandidates-2 << std::endl;
+		int move = mcts.BestMoveUCT(etat, UCTrepeat);
 		etat.addVoterToSequence(move);
 	}
-	std::cout << "The final sequence is ";
-	std::vector<int> res;
-	res = etat.getSequence();
-	etat.displayVec(res);
 
-	//int sbdugagnant = etat.playout();
+	std::vector<int> finalSeq = etat.getSequence();
+	etat.displayVec(finalSeq);
 
-	//std::cout << "point du gagnant : " << sbdugagnant << std::endl;
 	return 0;
 }
+	
+
+
+
+
+	/*std::string const nomFichier("/home/ulysse/Documents/Stage/Code/COSMOCarlo/durationData.txt");
+	std::ofstream monFlux(nomFichier.c_str());
+
+
+	std::clock_t start;
+    double duration = 0.0;
+
+	int nbCandidates = 0;
+	int nbVoters = 0;
+	double phi = 0.2;
+
+	int UCTprof = 10;
+
+	if(monFlux)    
+    {
+        monFlux << "#phi = " <<  phi << std::endl;
+        monFlux << "nbCandidates , nbVoters , duration , UCTcall" << std::endl;
+		int i=0;
+
+		while (duration < 5.0){
+			i++;
+			nbCandidates += 10;
+			
+			for (nbVoters = nbCandidates/5 +1; nbVoters < nbCandidates-1; nbVoters+=5)
+			{
+				std::vector<std::vector<int>> prefs(nbVoters);
+				
+				MallowsModelGenerate(phi, prefs, nbCandidates, nbVoters );
+				//std::cout << "Prefs voters :" << std::endl;
+				//displayPrefs(prefs, nbCandidates, nbVoters);
+
+				
+				loop : 
+					State etat(nbCandidates, nbVoters, prefs);
+					
+					int max=0, bestCandidate;
+					etat.optimumScore(bestCandidate, max);
+					start = std::clock();
+
+
+					//std::cout << "max borda score is : " << max << " for candidate " << bestCandidate << std::endl ;
+
+					MCTS mcts;
+					//std::cout << "start BestMoveUCT" << std::endl;
+					for (int j = 0; j < nbCandidates-1; ++j)
+					{
+						int move = mcts.BestMoveUCT(etat, UCTprof);
+						etat.addVoterToSequence(move);
+					}
+					duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+					if (etat.score(etat.getCandidatesLeft()[0]) != max )
+					{
+						std::cout << "max is " << max << " and value found was " << etat.score(etat.getCandidatesLeft()[0]) << std::endl;
+						std::cout << "\n\n\n REAALLLYYY NEGGAEEEE \n" << std::endl;
+						UCTprof += 2;
+						goto loop;
+					}
+        		
+        		monFlux << nbCandidates << "," << nbVoters << "," << duration << "," << UCTprof << std::endl;
+        		std::cout << nbCandidates << "," << nbVoters << "," << duration << "," << UCTprof << std::endl;
+
+			}
+		}
+    }
+    else
+    {
+        std::cout << "ERREUR: Impossible d'ouvrir le fichier." << std::endl;
+    }
+
+
+    std::cout << std::endl << "           OVER" << std::endl; */

@@ -76,19 +76,24 @@ class MCTS
 	}
 
 	int BestMoveUCT(State &s, int const &n) {
+
 		for (int i = 0; i < n; ++i)
 		{
 			State sTemp(s);
-			//std::cout << "start uct" << std::endl;
 			UCT(sTemp);
-			//std::cout<<"end"<<std::endl;
 		}
+
 		int best = 0;
+		if ( infoTable.find(s.getHash()) == infoTable.end())
+		{
+			throw "shouldn't happen";
+		}
 		double bestValue = infoTable[s.getHash()][2][0];
 		for (int i = 1; i < s.getNbVoters(); ++i)
 		{
 			if (infoTable[s.getHash()][2][i] > bestValue)
 			{
+				//std::cout << "s.getHash() = " << s.getHash() << " and i = " << i << std::endl; 
 				bestValue = infoTable[s.getHash()][2][i];
 				best = i;
 			}
