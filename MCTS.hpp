@@ -16,6 +16,7 @@
 
 //template<class Statistique, class RandomVariable, class Measurement, class RNG>
 //void MonteCarlo(Statistique & res, )
+template <class StateContext> //CTX for CONTEXT
 class MCTS 
 {
 
@@ -29,19 +30,19 @@ class MCTS
 
 	//MCTS(std::string score="Borda"){	}
 
-	int UCT(State s){
+	int UCT(StateContext s, bool multiplayer = false){
 		//std::cout<<"yoho"<<std::endl;
 
 		if (s.terminal())
 		{
-			return s.score();
+			return s.result();
 		}
 		int currentHash = s.getHash();
 		if (infoTable.find(currentHash) != infoTable.end())			//if getHash() is in infoTable
 		{
 			double bestValue = -1000000.0;
 			int best = 0;
-			for (int i = 0; i < s.getNbVoters(); ++i)
+			for (int i = 0; i < s.getNbChild(); ++i)
 			{
 				double val = 1000000.0;
 				std::vector<std::vector<int>> &t = infoTable[currentHash];
@@ -56,18 +57,25 @@ class MCTS
 					best = i;
 				}
 			}
-			s.addVoterToSequence( best );
+			s.action( best );
 			int res = UCT(s);
 
 			infoTable[currentHash][0][0] += 1;
 			infoTable[currentHash][1][best] += 1;
-			infoTable[currentHash][2][best] += res;
+			if (multiplayer)
+			{
+				//evaluation of a candidate by the current voter
+				infoTable[currentHash][2][best] += s.score(res);
+			}else
+			{
+				infoTable[currentHash][2][best] += res;
+			}
 			return res;
 		}else
 		{
 			std::vector<int> playoutCurrentState = {1};		//state added so seen once
-			std::vector<int> nPlayout(s.getNbVoters(),0);
-			std::vector<int> nScore(s.getNbVoters(),0);
+			std::vector<int> nPlayout(s.getNbChild(),0);
+			std::vector<int> nScore(s.getNbChild(),0);
 			std::vector<std::vector<int>> v = {playoutCurrentState, nPlayout, nScore};
 
 			infoTable.insert({s.getHash(), v});
@@ -75,11 +83,11 @@ class MCTS
 		}
 	}
 
-	int BestMoveUCT(State &s, int const &n) {
+	int BestMoveUCT(StateContext &s, int const &n) {
 
 		for (int i = 0; i < n; ++i)
 		{
-			State sTemp(s);
+			StateContext sTemp(s);
 			UCT(sTemp);
 		}
 
@@ -100,6 +108,8 @@ class MCTS
 		}
 		return best;
 	}
+
+	
 };
 
 #endif

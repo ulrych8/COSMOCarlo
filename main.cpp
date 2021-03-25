@@ -5,7 +5,9 @@
 #include <ctime>		//clock
 #include <fstream>		//file
 
-#include "State.hpp"
+   
+#include "StateCentralAuthority.hpp"
+#include "StateGivenSequence.hpp"
 #include "MCTS.hpp"
 
 void MallowsModelGenerate(double phi, std::vector<std::vector<int>> &prefs, int const& nbCandidates, int const& nbVoters){
@@ -58,35 +60,99 @@ void displayPrefs(std::vector<std::vector<int>> &prefs, int const& nbCandidates,
 	}
 }
 
+void randomSequence(std::vector<int> &seq, int const& nbCandidates, int const& nbVoters)
+{
+	for (int i = 0; i < nbVoters; ++i)
+	{
+		seq.push_back(i);
+	}
+	//sequence should be equal to nbCandidates -1
+	for (int j = nbVoters; j < nbCandidates; ++j)
+	{
+		seq.push_back(rand() % nbVoters);
+	}	
+	std::random_shuffle(seq.begin(), seq.end());
+}
+
 int main(){
 	srand (time(NULL));
 
 
-    int const nbCandidates = 8;
-	int const nbVoters = 4;
+	std::string CONTEXT = "2";
 
-	int const nbPrefs = 100000;
-	int const UCTrepeat = 50;
-
-	std::vector<std::vector<int>> prefs(nbPrefs);
-
-	RandomPrefsGenerate(prefs, nbCandidates, nbPrefs);
-
-
-	State etat(nbCandidates, nbVoters, prefs, nbPrefs);
-
-	MCTS mcts;
-	std::cout << "nbCandidates : " << nbCandidates << std::endl;
-	std::cout << "nbVoters : " << nbVoters << std::endl;
-	for (int j = 0; j < nbCandidates-1; ++j)
+	if (CONTEXT=="2")
 	{
-		std::cout << j << "/" << nbCandidates-2 << std::endl;
-		int move = mcts.BestMoveUCT(etat, UCTrepeat);
-		etat.addVoterToSequence(move);
+		/*int const nbCandidates = 8;
+		int const nbVoters = 4;
+		int const UCTrepeat = 50;
+
+		std::vector<std::vector<int>> prefs(nbVoters);
+		std::vector<int> sequence;
+
+		randomSequence(sequence, nbCandidates, nbVoters);
+		RandomPrefsGenerate(prefs, nbCandidates, nbVoters);
+		//MallowsModelGenerate(phi, prefs, nbCandidates, nbVoters );*/
+		int const nbCandidates = 4;
+		std::cout << "score in parent" << std::endl;
+		int const nbVoters = 3;
+		int const UCTrepeat = 50;
+
+		std::vector<std::vector<int>> prefs = {{0,1,2,3},
+											   {2,0,1,3},
+											   {2,1,0,3}};
+		std::vector<int> sequence = {0,1,2};
+
+		StateGivenSequence etat(nbCandidates, nbVoters, prefs, sequence);
+
+		MCTS<StateGivenSequence> mcts;
+		std::cout << "nbCandidates : " << nbCandidates << std::endl;
+		std::cout << "nbVoters : " << nbVoters << std::endl;	
+		for (int j = 0; j < nbCandidates-1; ++j)
+		{
+			std::cout << j << "/" << nbCandidates-2 << std::endl;
+			int move = mcts.BestMoveUCT(etat, UCTrepeat);
+			etat.action(move);
+		}
+
+		std::vector<int> finalSeq = etat.getSequence();
+		std::cout << "Sequence : ";
+		etat.displayVec(finalSeq);		
+		std::cout << "Elimination Queue : ";
+		std::vector<int> elimQueue = etat.getEliminationQueue();
+		etat.displayVec(elimQueue);
+		std::cout << "optimumScore = " << etat.optimumScore() << std::endl;
+		std::cout << "score final = " << ((State) etat).score() << std::endl;;
 	}
 
-	std::vector<int> finalSeq = etat.getSequence();
-	etat.displayVec(finalSeq);
+	if (CONTEXT=="3")
+	{
+	    int const nbCandidates = 8;
+		int const nbVoters = 4;
+
+		int const nbPrefs = 100000;
+		int const UCTrepeat = 50;
+
+		std::vector<std::vector<int>> prefs(nbPrefs);
+
+		RandomPrefsGenerate(prefs, nbCandidates, nbPrefs);
+
+
+		StateCentralAuthority etat(nbCandidates, nbVoters, prefs, nbPrefs);
+
+		MCTS<StateCentralAuthority> mcts;
+		std::cout << "nbCandidates : " << nbCandidates << std::endl;
+		std::cout << "nbVoters : " << nbVoters << std::endl;
+		for (int j = 0; j < nbCandidates-1; ++j)
+		{
+			std::cout << j << "/" << nbCandidates-2 << std::endl;
+			int move = mcts.BestMoveUCT(etat, UCTrepeat);
+			etat.action(move);
+		}
+
+		std::vector<int> finalSeq = etat.getSequence();
+		etat.displayVec(finalSeq);
+
+	}
 
 	return 0;
 }

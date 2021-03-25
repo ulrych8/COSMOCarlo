@@ -12,65 +12,51 @@
 class State 
 {
 
-	private :
+	protected :
 
 	std::vector<int> sequence;		//pi - elimination sequence - maxsize = nbCandidates
 	std::vector<int> candidatesLeft;	//candidate not yet eliminated	
 	int nbCandidates;
 	int nbVoters;
 	std::vector<std::vector<int>> votersPreferences;	// size >> m*n -- maybe use an array rather than a vector
-	int nbPrefs;	//m*n -- maybe use an array rather than a vector
+	//int nbPrefs;	//m*n -- maybe use an array rather than a vector
 	uint hash = 0;		//use hash in play function
-	std::vector<std::vector<uint>> hashTable = std::vector<std::vector<uint>>(2);	//hashTable[O] for candidates et [1] for voters
+	std::vector<std::vector<uint>> hashTable = std::vector<std::vector<uint>>(2); 	//hashTable[O] for candidates et [1] for voters
 
 
 	public :
 
-	State(int _nbCandidates, int _nbVoters, std::vector<std::vector<int>> _votersPreferences, int _nbPrefs){
-		srand (time(NULL));
-		nbCandidates = _nbCandidates; 
-		nbVoters = _nbVoters;
-		votersPreferences = _votersPreferences;
-		nbPrefs = _nbPrefs;
-		for (int i = 0; i < nbCandidates; ++i)
-		{
-			candidatesLeft.push_back(i);
-			hashTable[0].push_back(rand() % (1<<(nbVoters+nbCandidates)));
-		}
-		for (int i = 0; i < nbVoters; ++i)
-		{
-			hashTable[1].push_back( rand() % (1<<(nbVoters+nbCandidates)));
-		}
-		//displayVec(hashTable[1]);
-	}
-
 	//int can be changed by using template if borda is not the only rule
-	int score(int winner=-1, std::vector<int> votersSelected = {})
+	int virtual score()
 	{
-		if (votersSelected.size() == 0)
-		{
-			votersSelected = std::vector<int>();
-			for (int i = 0; i < nbVoters; ++i)
-			{
-				votersSelected.push_back(rand() % nbPrefs);
-			}
-		}
-		if (winner<0){
-			winner = candidatesLeft[0];
-		}
+		int winner = candidatesLeft[0];
+		
 		int res = 0;
 		int index;
 		for (int i = 0; i < nbVoters; ++i)
 		{
-			findElement(votersPreferences[votersSelected[i]],winner,index);
+			findElement(votersPreferences[i],winner,index);
 			res += nbCandidates-index-1;		// borda score
 		}
 		//std::cout << " res = " << res << std::endl;
 		return res;
 	}
 
-	//playout only with votersIndex < nbVoters
-	int focusPlayout()	//sincere playout 
+	int virtual score(int winner)
+	{
+		int res = 0;
+		int index;
+		for (int i = 0; i < nbVoters; ++i)
+		{
+			findElement(votersPreferences[i],winner,index);
+			res += nbCandidates-index-1;		// borda score
+		}
+		//std::cout << " res = " << res << std::endl;
+		return res;
+	}
+
+
+	int virtual playout()	//sincere playout 
 	{
 		if (candidatesLeft.size() < 2) return score(candidatesLeft[0]);
 		std::vector<int> candidatesLeftCopy = candidatesLeft;
@@ -84,25 +70,11 @@ class State
 		return score(candidatesLeftCopy[0]);
 	}
 
-	//playout with voters selected among all voters available
-	int playout()
+	int virtual result()
 	{
-		if (candidatesLeft.size() < 2) return score(candidatesLeft[0]);
-		std::vector<int> candidatesLeftCopy = candidatesLeft;	
-		std::vector<int> votersSelected;
-		for (int i = 0; i < nbVoters; ++i)
-		{
-			votersSelected.push_back(rand() % nbPrefs);
-		}
-		//for completing the sequence
-		for (int i = sequence.size() - 1; i < nbCandidates-2; ++i)	//maybe nbCandidates - 1
-		{
-			int votersToChose = votersSelected[rand() % nbVoters];
-
-			eraseLeastPreferedSincere(votersToChose, candidatesLeftCopy);
-		}
-		return score(candidatesLeftCopy[0], votersSelected);
+		return score();
 	}
+
 
 	//true if element find, index becomes the index of the element
 	bool findElement(std::vector<int> &v, int key, int &index){
@@ -116,27 +88,34 @@ class State
 		return false;
 	}
 
-	//maximal score reachable, change value of its argument
-	void optimumScore(int &bestCandidate, int &max){
+	//change type of return with template
+	int optimumScore(){
+		int max = 0;
 		int currenScore;
 		for (int i = 0; i < nbCandidates; ++i)
 		{
-			currenScore = score(i);
+			currenScore = State::score(i);
 			if (currenScore > max)
 			{
 				max = currenScore;
-				bestCandidate = i;
 			}
 		}
+		return max;
 	}
 
 	//add voter to the final sequence and erase his sincere worst candidate
 	void addVoterToSequence(int voter){
 		sequence.push_back(voter);
-		int candidateElminate = eraseLeastPreferedSincere(voter, candidatesLeft);
+		int candidateElminated = eraseLeastPreferedSincere(voter, candidatesLeft);
 		//change hash
-		hash ^= hashTable[0][candidateElminate] ^ hashTable[1][voter] ;
+		hash ^= hashTable[0][candidateElminated] * hashTable[1][voter] ;
 	}
+
+	void virtual action(int  choice)
+	{
+		addVoterToSequence(choice);
+	}
+
 
 	int eraseLeastPreferedSincere(int voter, std::vector<int> &candidatesLeft){
 		//for going through voter preference backwards
@@ -203,6 +182,11 @@ class State
 
 	std::vector<int> getSequence() const{
 		return sequence;
+	}
+
+	int virtual getNbChild() const
+	{
+		return nbVoters;
 	}
 
 };
