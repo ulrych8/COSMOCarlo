@@ -66,62 +66,190 @@ void randomSequence(std::vector<int> &seq, int const& nbCandidates, int const& n
 	{
 		seq.push_back(i);
 	}
-	//sequence should be equal to nbCandidates -1
-	for (int j = nbVoters; j < nbCandidates; ++j)
+	//sequence size should be equal to nbCandidates -1
+	for (int j = nbVoters; j < nbCandidates-1; ++j)
 	{
 		seq.push_back(rand() % nbVoters);
 	}	
 	std::random_shuffle(seq.begin(), seq.end());
 }
 
+
+//====================================================================
+//
+//						M A I N
+//
+//====================================================================
+
+
 int main(){
 	srand (time(NULL));
 
-
 	std::string CONTEXT = "2";
+	bool REPEAT = false;
 
-	if (CONTEXT=="2")
+	int const UCTrepeat = 50;
+
+	//SAVE DATA
+	std::string const nomFichier("/home/ulysse/Documents/Stage/Code/COSMOCarlo/durationData.txt");
+	std::ofstream monFlux(nomFichier.c_str());
+
+	std::clock_t start;
+    double duration = 0.0;
+
+    if(monFlux)    
+    {
+    	int nbCandidates = 0;
+		int nbVoters = 0;
+		std::vector<int> seq;
+        monFlux << "#IC" << std::endl;
+        monFlux << "nbCandidates , nbVoters , duration" << std::endl;
+		int i=0;
+
+		while (duration < 5.0){
+			i++;
+			nbCandidates += 10;
+			
+			for (nbVoters = nbCandidates/5 +1; nbVoters < nbCandidates-1; nbVoters+=5)
+			{
+				std::vector<std::vector<int>> prefs(nbVoters);
+				std::vector<int> sequence;
+
+				randomSequence(sequence, nbCandidates, nbVoters);
+				RandomPrefsGenerate(prefs, nbCandidates, nbVoters);
+				
+				start = std::clock();
+
+				StateGivenSequence etat(nbCandidates, nbVoters, prefs, sequence);
+				MCTS<StateGivenSequence> mcts;
+				for (int j = 0; j < nbCandidates-1; ++j)
+				{
+					//std::cout << j << "/" << nbCandidates-2 << std::endl;
+					int move = mcts.BestMoveUCT(etat, UCTrepeat, true); //true 'cause mutliplayer
+					etat.action(move);
+				}
+
+				duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+
+        		
+        		monFlux << nbCandidates << "," << nbVoters << "," << duration << std::endl;
+        		std::cout << nbCandidates << "," << nbVoters << "," << duration << std::endl;
+
+			}
+		}
+    }
+    else
+    {
+        std::cout << "ERREUR: Impossible d'ouvrir le fichier." << std::endl;
+    }
+
+
+	if (CONTEXT=="2" && REPEAT)
 	{
-		/*int const nbCandidates = 8;
-		int const nbVoters = 4;
-		int const UCTrepeat = 50;
+		//int const nbCandidates = 8;
+		//int const nbVoters = 4;
+		double const phi=0.2;
+		
+		int LnbCandidates[] = {8, 10, 20, 20, 40};
+		int LnbVoters[] = {4, 5, 7, 15, 15};
 
-		std::vector<std::vector<int>> prefs(nbVoters);
-		std::vector<int> sequence;
+		for (int i = 0; i < 5; ++i)
+		{
+			int &nbCandidates = LnbCandidates[i];
+			int &nbVoters = LnbVoters[i];
+			
+			std::cout << "nbCandidates : " << nbCandidates << std::endl;
+			std::cout << "nbVoters : " << nbVoters << std::endl;	
+		
+			std::vector<double> anarchyPrice;
+			double maxAnarchy = 0;
+			double sumAnarchy = 0;
+			for (int lap = 0; lap < 1000; lap++)
+			{
+				if (lap%100 == 0) std::cout << ".";
+				std::vector<std::vector<int>> prefs(nbVoters);
+				std::vector<int> sequence;
 
-		randomSequence(sequence, nbCandidates, nbVoters);
-		RandomPrefsGenerate(prefs, nbCandidates, nbVoters);
-		//MallowsModelGenerate(phi, prefs, nbCandidates, nbVoters );*/
+				randomSequence(sequence, nbCandidates, nbVoters);
+				//RandomPrefsGenerate(prefs, nbCandidates, nbVoters);
+				MallowsModelGenerate(phi, prefs, nbCandidates, nbVoters );
+				/*int const nbCandidates = 4;
+				std::cout << "score in parent" << std::endl;
+				int const nbVoters = 3;
+				int const UCTrepeat = 50;
+
+				std::vector<std::vector<int>> prefs = {{0,1,2,3},
+													   {2,0,1,3},
+													   {2,1,0,3}};
+				std::vector<int> sequence = {0,1,2};*/
+				StateGivenSequence etat(nbCandidates, nbVoters, prefs, sequence);
+				MCTS<StateGivenSequence> mcts;
+				for (int j = 0; j < nbCandidates-1; ++j)
+				{
+					//std::cout << j << "/" << nbCandidates-2 << std::endl;
+					int move = mcts.BestMoveUCT(etat, UCTrepeat, true); //true 'cause mutliplayer
+					etat.action(move);
+				}
+
+				//displayPrefs(prefs,nbCandidates,nbVoters);
+
+				std::vector<int> finalSeq = etat.getSequence();
+				//std::cout << "Sequence : ";
+				//etat.displayVec(finalSeq);		
+				//std::cout << "Elimination Queue : ";
+				std::vector<int> elimQueue = etat.getEliminationQueue();
+				//etat.displayVec(elimQueue);
+				int bestCandidate, max=0;
+				etat.optimumScore(bestCandidate,max);
+				//std::cout << "bestCandidate is " << bestCandidate << " and optimumScore = " << max << std::endl;
+				int playScore =((State) etat).score();
+				//std::cout << "final Candidate is " << etat.getCandidatesLeft()[0] << " score final = " << playScore << std::endl;;
+				//=======================================================
+				double ratio = (double) max/playScore;
+				sumAnarchy += ratio;
+				anarchyPrice.push_back(ratio);
+				if (maxAnarchy < ratio) maxAnarchy = ratio;
+				//std::cout << "°°°°°°°°°ratio = " << ratio << std::endl;
+				//std::cout << "================================================" << std::endl;
+			}
+			std::cout << std::endl;
+			auto n = anarchyPrice.size(); 
+			double average = 0.0;
+			average = sumAnarchy / n;
+			std::cout << "final average = " << average << std::endl;
+			std::cout << "max ratio = " << maxAnarchy << std::endl;
+			double stdvar = 0;
+			for (std::size_t k = 0; k < anarchyPrice.size(); ++k)
+			{
+				stdvar += (average - anarchyPrice[k])*(average - anarchyPrice[k]);
+			}
+			stdvar = sqrt(stdvar/n);
+			std::cout << "std : " << stdvar << std::endl;
+			std::cout << "========================================" << std::endl;
+		}
+		/*for (int nbCandidates = 10; nbCandidates < 100; nbCandidates+=10)
+		{
+			int loopThrough[] = {nbCandidates/4, nbCandidates/2, 3*nbCandidates/4};
+			for (const int &nbVoters : loopThrough)
+			//for (int nbVoters = nbCandidates/5; nbVoters < nbCandidates-1; nbVoters+=5)
+			{
+				//=======================================================
+			}
+		}*/
+	}else if (CONTEXT=="2" && !REPEAT)
+	{
 		int const nbCandidates = 4;
-		std::cout << "score in parent" << std::endl;
 		int const nbVoters = 3;
-		int const UCTrepeat = 50;
 
 		std::vector<std::vector<int>> prefs = {{0,1,2,3},
 											   {2,0,1,3},
 											   {2,1,0,3}};
 		std::vector<int> sequence = {0,1,2};
-
 		StateGivenSequence etat(nbCandidates, nbVoters, prefs, sequence);
-
 		MCTS<StateGivenSequence> mcts;
-		std::cout << "nbCandidates : " << nbCandidates << std::endl;
-		std::cout << "nbVoters : " << nbVoters << std::endl;	
-		for (int j = 0; j < nbCandidates-1; ++j)
-		{
-			std::cout << j << "/" << nbCandidates-2 << std::endl;
-			int move = mcts.BestMoveUCT(etat, UCTrepeat);
-			etat.action(move);
-		}
-
-		std::vector<int> finalSeq = etat.getSequence();
-		std::cout << "Sequence : ";
-		etat.displayVec(finalSeq);		
-		std::cout << "Elimination Queue : ";
-		std::vector<int> elimQueue = etat.getEliminationQueue();
-		etat.displayVec(elimQueue);
-		std::cout << "optimumScore = " << etat.optimumScore() << std::endl;
-		std::cout << "score final = " << ((State) etat).score() << std::endl;;
+		std::cout << "start mcts" << std::endl;
+		int finalWinner = mcts.MAXN(etat, nbCandidates-1);
+		std::cout << "the final winner is " << finalWinner << std::endl;
 	}
 
 	if (CONTEXT=="3")
@@ -130,7 +258,7 @@ int main(){
 		int const nbVoters = 4;
 
 		int const nbPrefs = 100000;
-		int const UCTrepeat = 50;
+		int const UCTrepeat = 100;
 
 		std::vector<std::vector<int>> prefs(nbPrefs);
 

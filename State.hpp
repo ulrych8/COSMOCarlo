@@ -21,7 +21,7 @@ class State
 	std::vector<std::vector<int>> votersPreferences;	// size >> m*n -- maybe use an array rather than a vector
 	//int nbPrefs;	//m*n -- maybe use an array rather than a vector
 	uint hash = 0;		//use hash in play function
-	std::vector<std::vector<uint>> hashTable = std::vector<std::vector<uint>>(2); 	//hashTable[O] for candidates et [1] for voters
+	std::vector<std::vector<uint>> hashTable;// = std::vector<std::vector<uint>>(2); 	//hashTable[O] for candidates et [1] for voters
 
 
 	public :
@@ -103,12 +103,26 @@ class State
 		return max;
 	}
 
+	//maximal score reachable, change value of its argument
+	void optimumScore(int &bestCandidate, int &max){
+		int currenScore;
+		for (int i = 0; i < nbCandidates; ++i)
+		{
+			currenScore = State::score(i);
+			if (currenScore > max)
+			{
+				max = currenScore;
+				bestCandidate = i;
+			}
+		}
+	}
+
 	//add voter to the final sequence and erase his sincere worst candidate
 	void addVoterToSequence(int voter){
 		sequence.push_back(voter);
 		int candidateElminated = eraseLeastPreferedSincere(voter, candidatesLeft);
 		//change hash
-		hash ^= hashTable[0][candidateElminated] * hashTable[1][voter] ;
+		hash ^= hashTable[candidateElminated][voter] ;
 	}
 
 	void virtual action(int  choice)
@@ -131,6 +145,27 @@ class State
 			}
 		}
 		throw "shouldn't be able to reach here";
+	}
+
+	int eraseLeastPreferedSincere(int voter){
+		//for going through voter preference backwards
+		for (int j = nbCandidates-1; j >=0; --j)
+		{
+			int index;
+			//checking if voter's preference can be discarded
+			if (findElement(candidatesLeft, votersPreferences[voter][j], index))
+			{
+				int candidateToElminate = candidatesLeft[index];
+				candidatesLeft.erase(candidatesLeft.begin()+index);
+				return candidateToElminate;
+			}
+		}
+		throw "shouldn't be able to reach here";
+	}
+
+	int virtual eraseLeastPreferedSincere(){
+		int voter = rand()%nbVoters;
+		return eraseLeastPreferedSincere(voter);
 	}
 
 	//display a given vector
@@ -188,6 +223,8 @@ class State
 	{
 		return nbVoters;
 	}
+
+	//State virtual getChlid(int index);
 
 };
 

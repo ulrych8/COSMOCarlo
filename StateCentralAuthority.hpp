@@ -37,17 +37,27 @@ class StateCentralAuthority : public State
 		nbVoters = _nbVoters;
 		votersPreferences = _votersPreferences;
 		nbPrefs = _nbPrefs;
-		//hashTable = std::vector<std::vector<uint>>(nbCandidates, std::vector<uint>(nbVoters));
+		hashTable = std::vector<std::vector<uint>>(nbCandidates, std::vector<uint>(nbVoters));
 		for (int i = 0; i < nbCandidates; ++i)
 		{
 			candidatesLeft.push_back(i);
-			hashTable[0].push_back(rand() % (1<<(nbVoters+nbCandidates)));
+			//hashTable[0].push_back(rand() % (1<<15));
+			for (int j = 0; j < nbVoters; ++j)
+			{
+				hashTable[i][j] = rand() % (1<<15);
+			}
 		}
-		for (int i = 0; i < nbVoters; ++i)
+		/*
+		hashTable = std::vector<std::vector<uint>>(2, std::vector<uint>(nbVoters));
+		for (int i = 0; i < nbCandidates; ++i)
 		{
-			hashTable[1].push_back( rand() % (1<<(nbVoters+nbCandidates)));
+			candidatesLeft.push_back(i);
+			hashTable[0].push_back(rand() % (1<<15));
 		}
-		//displayVec(hashTable[1]);
+		for (int j = 0; j < nbVoters; ++j)
+		{
+			hashTable[1].push_back(rand() % (1<<15));
+		}*/
 	}
 
 	//int can be changed by using template if borda is not the only rule
@@ -87,14 +97,11 @@ class StateCentralAuthority : public State
 			findElement(votersPreferences[votersSelected[i]],winner,index);
 			res += nbCandidates-index-1;		// borda score
 		}
-		//std::cout << " res = " << res << std::endl;
 		return res;
 	}
 
 	int score(int winner, std::vector<int> votersSelected)
 	{
-		//std::cout << "score executed in the right place " << std::endl;
-
 		int res = 0;
 		int index;
 		for (int i = 0; i < nbVoters; ++i)
@@ -102,7 +109,6 @@ class StateCentralAuthority : public State
 			findElement(votersPreferences[votersSelected[i]],winner,index);
 			res += nbCandidates-index-1;		// borda score
 		}
-		//std::cout << " res = " << res << std::endl;
 		return res;
 	}
 
@@ -125,22 +131,6 @@ class StateCentralAuthority : public State
 		}
 		return score(candidatesLeftCopy[0], votersSelected);
 	}
-
-	//maximal score reachable, change value of its argument
-	void optimumScore(int &bestCandidate, int &max){
-		int currenScore;
-		for (int i = 0; i < nbCandidates; ++i)
-		{
-			currenScore = score(i);
-			if (currenScore > max)
-			{
-				max = currenScore;
-				bestCandidate = i;
-			}
-		}
-	}
-
-	
 
 };
 
