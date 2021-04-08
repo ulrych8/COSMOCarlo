@@ -23,37 +23,69 @@ class MCTS
 	private :
 
 	std::map<int,std::vector<std::vector<int>>> infoTable;
-
+	std::vector<std::vector<uint>> historyTable;
+	bool chilOrdered;
 
 	public :
+	MCTS(int nbCandidates, int nbVoters, bool _chilOrdered)
+	{
+		//chilOrdered = false;//_chilOrdered;
+		for (int i = 0; i < nbVoters; ++i)
+		{
+			historyTable.push_back( std::vector<uint>(nbCandidates,0) );
+		}
+	}
+
 	//Take a state and the optimumScore for one player (nbCandidate-1)
 	//Return the winner
-	int MAXN(StateContext s, int maxScore )
+	int MAXN(StateContext s, int depth = 0)
 	{
+		//std::cout << "|" << std::endl;
 		if (s.getCandidatesLeft().size() == 2)
 		{
 			s.eraseLeastPreferedSincere();
 			return s.getCandidatesLeft()[0];
 		}
 
+		int currentVoter = s.getCurrentVoter();
+		
 		//improve order of children if it may
 		int maxScoreAction = 0;
 		int maxWinner;
-		for (int i = 1; i < s.getNbChild(); ++i)
+		//int indexMaxScoreAction;
+
+		int lastEliminatedCandidate;
+		int maxScore = s.scoreMaxForCurrentVoter();
+		for (int i = 0; i < s.getNbChild(); ++i)
 		{
 			StateContext newState = s.getChild(i);
-			int winner = MAXN(newState,maxScore);
+			
+			if (chilOrdered)	
+			//{
+				//->order list of children == History Heuristic
+				s.orderCandidatesLeftWithHistory(historyTable); 
+
+			//}
+
+			//->get last eliminated candidate
+			lastEliminatedCandidate = s.getLastEliminatedCandidate();
+
+
+			int winner = MAXN(newState, depth+=1);
 			int currentScore = s.score(winner);
 			if (currentScore ==  maxScore)
 			{
+				historyTable[currentVoter][lastEliminatedCandidate] += 1 << depth;
 				return winner;
 			}
 			if (currentScore > maxScoreAction)
 			{
 				maxScoreAction = currentScore;
 				maxWinner = winner;
+				//indexMaxScoreAction = i;
 			}
 		}
+		historyTable[currentVoter][lastEliminatedCandidate] += 1 << depth;
 		return maxWinner;
 	}
 
@@ -84,8 +116,8 @@ class MCTS
 				}
 			}
 
-			s.action( best );
-			int res = UCT(s, multiplayer);
+			StateContext sChild = s.getChild( best );
+			int res = UCT(sChild, multiplayer);
 			//std::cout << " @ @ @ -> "; 
 			infoTable[currentHash][0][0] += 1;
 			infoTable[currentHash][1][best] += 1;

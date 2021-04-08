@@ -91,7 +91,7 @@ int main(){
 	int const UCTrepeat = 50;
 
 	//SAVE DATA
-	std::string const nomFichier("/home/ulysse/Documents/Stage/Code/COSMOCarlo/durationData.txt");
+	/*std::string const nomFichier("/home/ulysse/Documents/Stage/Code/COSMOCarlo/durationDataMAXN.txt");
 	std::ofstream monFlux(nomFichier.c_str());
 
 	std::clock_t start;
@@ -122,12 +122,8 @@ int main(){
 
 				StateGivenSequence etat(nbCandidates, nbVoters, prefs, sequence);
 				MCTS<StateGivenSequence> mcts;
-				for (int j = 0; j < nbCandidates-1; ++j)
-				{
-					//std::cout << j << "/" << nbCandidates-2 << std::endl;
-					int move = mcts.BestMoveUCT(etat, UCTrepeat, true); //true 'cause mutliplayer
-					etat.action(move);
-				}
+
+				int finalWinner = mcts.MAXN(etat, nbCandidates-1);
 
 				duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
 
@@ -141,7 +137,7 @@ int main(){
     else
     {
         std::cout << "ERREUR: Impossible d'ouvrir le fichier." << std::endl;
-    }
+    }*/
 
 
 	if (CONTEXT=="2" && REPEAT)
@@ -183,7 +179,7 @@ int main(){
 													   {2,1,0,3}};
 				std::vector<int> sequence = {0,1,2};*/
 				StateGivenSequence etat(nbCandidates, nbVoters, prefs, sequence);
-				MCTS<StateGivenSequence> mcts;
+				MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, false);
 				for (int j = 0; j < nbCandidates-1; ++j)
 				{
 					//std::cout << j << "/" << nbCandidates-2 << std::endl;
@@ -238,18 +234,63 @@ int main(){
 		}*/
 	}else if (CONTEXT=="2" && !REPEAT)
 	{
-		int const nbCandidates = 4;
-		int const nbVoters = 3;
+		int cpt = 0;
+		int lap = 50;
+		for (int i = 0; i < lap; ++i)
+		{
+			std::cout << i << "/" << lap << std::endl;
+			int const nbCandidates = 8;
+			int const nbVoters = 4;
+			std::vector<std::vector<int>> prefs(nbVoters);
+			std::vector<int> sequence;
 
-		std::vector<std::vector<int>> prefs = {{0,1,2,3},
-											   {2,0,1,3},
-											   {2,1,0,3}};
-		std::vector<int> sequence = {0,1,2};
-		StateGivenSequence etat(nbCandidates, nbVoters, prefs, sequence);
-		MCTS<StateGivenSequence> mcts;
-		std::cout << "start mcts" << std::endl;
-		int finalWinner = mcts.MAXN(etat, nbCandidates-1);
-		std::cout << "the final winner is " << finalWinner << std::endl;
+			randomSequence(sequence, nbCandidates, nbVoters);
+			RandomPrefsGenerate(prefs, nbCandidates, nbVoters);
+			//MallowsModelGenerate(phi, prefs, nbCandidates, nbVoters );
+			//std::vector<std::vector<int>> prefs = {{0,1,2,3},
+			//									   {2,0,1,3},
+			//									   {2,1,0,3}};
+			//std::vector<int> sequence = {0,1,2,4,3,2,3,5};
+			StateGivenSequence etat(nbCandidates, nbVoters, prefs, sequence);
+			MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, false);
+			StateGivenSequence etat2(nbCandidates, nbVoters, prefs, sequence);
+			MCTS<StateGivenSequence> mcts2(nbCandidates, nbVoters, true);
+			
+			std::clock_t start;
+			double duration1 = 0.0;
+			double duration2 = 0.0;
+			int finalWinner;
+			std::cout << "start mcts 1" << std::endl;
+			
+			start = std::clock();
+			finalWinner = mcts.MAXN(etat);
+			std::cout << "the final winner of MAXN is " << finalWinner << std::endl;
+			duration1 = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+			std::cout << "duration == " << duration1 << std::endl;
+
+			std::cout << "start mcts 2" << std::endl;
+			start = std::clock();
+
+			finalWinner = mcts2.MAXN(etat2);
+			std::cout << "the final winner of MAXN is " << finalWinner << std::endl;
+			duration2 = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+			std::cout << "duration ordered == " << duration2 << std::endl;
+			std::cout << "////////////////////////////////////////////" << std::endl;
+			if (duration2 < duration1) cpt++;
+		}
+
+		std::cout << "better " << cpt << "/" << lap << std::endl;
+
+		/*for (int j = 0; j < nbCandidates-1; ++j)
+		{
+			//std::cout << j << "/" << nbCandidates-2 << std::endl;
+			int move = mcts.BestMoveUCT(etat, 1000, true); //true 'cause mutliplayer
+			etat.action(move);
+		}
+		std::cout << "the final winner of UCT is :";
+		std::cout << etat.getCandidatesLeft()[0] << std::endl;*/
+
+
 	}
 
 	if (CONTEXT=="3")
@@ -267,7 +308,7 @@ int main(){
 
 		StateCentralAuthority etat(nbCandidates, nbVoters, prefs, nbPrefs);
 
-		MCTS<StateCentralAuthority> mcts;
+		MCTS<StateCentralAuthority> mcts(nbCandidates, nbVoters, false);
 		std::cout << "nbCandidates : " << nbCandidates << std::endl;
 		std::cout << "nbVoters : " << nbVoters << std::endl;
 		for (int j = 0; j < nbCandidates-1; ++j)

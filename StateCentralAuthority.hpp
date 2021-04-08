@@ -132,6 +132,12 @@ class StateCentralAuthority : public State
 		return score(candidatesLeftCopy[0], votersSelected);
 	}
 
+	StateCentralAuthority getChild(int index)
+	{
+		StateCentralAuthority *sCopy = new StateCentralAuthority(*this);
+		(*sCopy).action(index);
+		return *sCopy;
+	}
 };
 
 #endif

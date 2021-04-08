@@ -7,6 +7,8 @@
 #include <time.h>
 #include <algorithm>
 #include <cmath>
+#include <map>
+
 //template<class Statistique, class RandomVariable, class Measurement, class RNG>
 //void MonteCarlo(Statistique & res, )
 class State 
@@ -86,6 +88,36 @@ class State
 			}
 		}
 		return false;
+	}
+
+	//return the index of the best element
+	void findBestElement(std::vector<int> &v, int &index)
+	{
+		int max=-1;
+		for (std::size_t i = 0; i < v.size(); ++i)
+		{
+			if (v[i] > max){
+				index = i;
+				max = v[i];
+			}
+		}
+	}
+
+	//return the index of the best element
+	int findBestElement(std::map<int,uint> &m, std::map<int,uint>::iterator &it)
+	{
+		it = m.begin();
+		uint max=it->second;
+		int candidate = it->first;
+		for (std::map<int,uint>::iterator i=++m.begin(); i!=m.end(); i++)
+		{
+			if (i->second > max){
+				max = i->second;
+				candidate = i->first;
+				it = i;
+			}
+		}
+		return candidate;
 	}
 
 	//change type of return with template
@@ -174,6 +206,15 @@ class State
 		for (std::size_t i = 0; i < v.size(); ++i)
 		{
 			std::cout << v[i] << " ";
+		}
+		std::cout << std::endl;
+	}
+
+	template <typename A, typename B>
+	void displayMap(std::map<A,B> &m) const{
+		for (auto const &elem : m )
+		{
+			std::cout << elem.first << ":" << elem.second << " ";
 		}
 		std::cout << std::endl;
 	}
