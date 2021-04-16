@@ -26,7 +26,7 @@ class StateGivenSequence : public State
 	std::vector<std::vector<uint>> hashTable;  	//hashTable[O] for candidates et [1] for voters
 	*/
 	int indexCurrentCandidateToVote = 0;
-	int lastEliminatedCandidate;
+	int lastEliminatedCandidate=-1;
 	std::vector<int> eliminationQueue;
 	bool order = false;
 
@@ -40,7 +40,7 @@ class StateGivenSequence : public State
 						std::vector<int> _sequence,
 						bool _order = false)
 	{
-		srand (time(NULL));
+		//srand (time(NULL));
 		nbCandidates = _nbCandidates; 
 		nbVoters = _nbVoters;
 		votersPreferences = _votersPreferences;
@@ -125,6 +125,32 @@ class StateGivenSequence : public State
 		return nbCandidates - index -1;
 	}
 
+	int scoreMaxForVoter(int voter)
+	{
+		for (int j = 0; j < nbCandidates; ++j)
+		{
+			int index;
+			if (findElement(candidatesLeft, votersPreferences[voter][j], index))
+			{
+				return nbCandidates - j - 1;
+			}
+		}
+		throw "Shouldn't be able to reach here";
+	} 
+
+	int scoreMinForVoter(int voter)
+	{
+		for (int j = nbCandidates-1; j >= 0; --j)
+		{
+			int index;
+			if (findElement(candidatesLeft, votersPreferences[voter][j], index))
+			{
+				return nbCandidates - j - 1;
+			}
+		}
+		throw "Shouldn't be able to reach here";
+	} 
+
 	int scoreMaxForCurrentVoter()
 	{
 		int currentVoter = getCurrentVoter();
@@ -133,11 +159,27 @@ class StateGivenSequence : public State
 			int index;
 			if (findElement(candidatesLeft, votersPreferences[currentVoter][j], index))
 			{
-				return nbCandidates - index - 1;
+				return nbCandidates - j - 1;
 			}
 		}
 		throw "Shouldn't be able to reach here";
 	}
+
+	//score max reachable with candidates left for voter of index 'indexVoter' in th seqeunce
+	int scoreMaxVoterSeqIndex(int indexVoter)
+	{
+		int voter = sequence[indexVoter];
+		for (int j = 0; j < nbCandidates; ++j)
+		{
+			int index=-1;
+			if (findElement(candidatesLeft, votersPreferences[voter][j], index))
+			{
+				return nbCandidates - j - 1;
+			}
+		}
+		throw "Shouldn't be able to reach here";
+	}
+
 
 	//only slowing thungs down.............
 	void orderCandidatesLeft()
@@ -155,18 +197,26 @@ class StateGivenSequence : public State
 		candidatesLeft = candidatesLeftOrdered;
 	}
 
+	void orderCandidatesLeftOnlyOnce(int voter)
+	{
+		std::vector<int> candidatesLeftOrdered;
+		for (int i = 0; i < nbCandidates; ++i)
+		{
+			int index;
+			if (findElement(candidatesLeft, votersPreferences[voter][i], index))
+			{
+				candidatesLeftOrdered.push_back(votersPreferences[voter][i]);
+			}
+		}
+		candidatesLeft = candidatesLeftOrdered;
+	}
+
 	void orderCandidatesLeftWithHistory(std::vector<std::vector<uint>> histTable)
 	{
-		//std::cout<<"1"<<std::endl;
-		//std::cout<<"cl size = "<< candidatesLeft.size() << std::endl;
-		//displayVec(candidatesLeft);
 		int currentVoter = getCurrentVoter(); 
 		std::map<int,uint> m;
 		for (int i=0; i < nbCandidates; i++) m[i] = histTable[currentVoter][i];
 		std::vector<int> candidatesLeftOrdered;
-
-		//displayMap(m);
-
 		for (size_t i = 0; i < candidatesLeft.size(); ++i)
 		{
 			beginAgain:
@@ -174,21 +224,29 @@ class StateGivenSequence : public State
 				int bestCandidate = findBestElement(m,it);
 				m.erase(it);
 				
-				//std::cout << "bst : " << bestCandidate << std::endl;
-				//std::cout << "map size : " << m.size() << std::endl;
 				int index;
 				if (findElement(candidatesLeft, bestCandidate, index))
 				{
 					candidatesLeftOrdered.push_back(bestCandidate);
-					//std::cout << "candidate found </" << std::endl;
 				}else
 				{
-					//std::cout << "candidate not found " << std::endl;
 					goto beginAgain;
 				}
 		}
 		candidatesLeft = candidatesLeftOrdered;
-		//std::cout<<"2"<<std::endl;
+	}
+
+	void orderCandidatesLeftWithKiller(int killValue)//, int& cpteur, int& cpteurUtile)
+	{
+		int index;
+		//cpteur+=1;
+		if (findElement(candidatesLeft, killValue, index))
+		{
+			candidatesLeft.erase(candidatesLeft.begin()+index);
+			candidatesLeft.insert(candidatesLeft.begin(),killValue);
+			//cpteurUtile+=1;
+		}
+
 	}
 
 	int getCurrentVoter(/*int recoil=0*/) const
@@ -208,12 +266,12 @@ class StateGivenSequence : public State
 
 	StateGivenSequence getChild(int index) 
 	{
-		StateGivenSequence *sCopy = new StateGivenSequence(*this);
-		(*sCopy).action(index);
-		return *sCopy;
+		StateGivenSequence sCopy = * this;//new StateGivenSequence(*this);
+		sCopy.action(index);
+		return sCopy;
 	}
 
-	int getLastEliminatedCandidate()
+	int getLastEliminatedCandidate() const
 	{
 		return lastEliminatedCandidate;
 	}

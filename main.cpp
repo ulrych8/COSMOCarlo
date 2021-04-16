@@ -81,6 +81,12 @@ void randomSequence(std::vector<int> &seq, int const& nbCandidates, int const& n
 //
 //====================================================================
 
+struct EXP{
+	std::string const heuristic;
+	int cpt;
+	double mean;
+};
+
 
 int main(){
 	srand (time(NULL));
@@ -96,7 +102,7 @@ int main(){
 
 	std::clock_t start;
     double duration = 0.0;
-
+= 0
     if(monFlux)    
     {
     	int nbCandidates = 0;
@@ -179,7 +185,7 @@ int main(){
 													   {2,1,0,3}};
 				std::vector<int> sequence = {0,1,2};*/
 				StateGivenSequence etat(nbCandidates, nbVoters, prefs, sequence);
-				MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, false);
+				MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters);
 				for (int j = 0; j < nbCandidates-1; ++j)
 				{
 					//std::cout << j << "/" << nbCandidates-2 << std::endl;
@@ -234,53 +240,164 @@ int main(){
 		}*/
 	}else if (CONTEXT=="2" && !REPEAT)
 	{
-		int cpt = 0;
-		int lap = 50;
+		std::vector<std::string> listHeuristics = {"vanilla_basic cut max", 	//don't do nothing
+									"vanilla_basic no cut",
+									//"simple order", 
+									//"simple pruning", 
+									//"killer",
+									//"complex pruning", 
+									//"ordered complex pruning" ,
+									//"simple order + simple pruning", 
+									//"simple pruning + killer", 
+									//"ordered complex pruning + killer"
+									"simple order + simple pruning + killer"
+								};
+		/*List of heuristics :
+		""   ,   "simpleOrder",  "killer"  ,   "history"   ,   "killer+simpleOrder";
+		"order only once"    ,  "alphaBeta pruning"
+		*/
+		
+		std::vector<EXP> listExp; 
+		for (size_t i = 0; i < listHeuristics.size(); ++i)
+		{
+			EXP newExp = {listHeuristics[i], 0 , 0.0}; 
+			//newExp.heuristic = listHeuristics[i];
+			//newExp.cpt = 0;
+			//newExp.mean = 0.0;
+			listExp.push_back(newExp);
+		}
+		int const nbCandidates = 8;
+		int const nbVoters = 4;
+		
+		int const lap = 30;
+
 		for (int i = 0; i < lap; ++i)
 		{
-			std::cout << i << "/" << lap << std::endl;
-			int const nbCandidates = 8;
-			int const nbVoters = 4;
+			std::cout << (i+1) << "/" << lap;
+			std::cout << "   nbCandidates : "<<nbCandidates<<" nbVoters : "<< nbVoters << std::endl;
 			std::vector<std::vector<int>> prefs(nbVoters);
 			std::vector<int> sequence;
-
 			randomSequence(sequence, nbCandidates, nbVoters);
 			RandomPrefsGenerate(prefs, nbCandidates, nbVoters);
+			
+			displayPrefs(prefs, nbCandidates, nbVoters);
+			std::cout << "-------" << std::endl;
 			//MallowsModelGenerate(phi, prefs, nbCandidates, nbVoters );
 			//std::vector<std::vector<int>> prefs = {{0,1,2,3},
 			//									   {2,0,1,3},
 			//									   {2,1,0,3}};
 			//std::vector<int> sequence = {0,1,2,4,3,2,3,5};
-			StateGivenSequence etat(nbCandidates, nbVoters, prefs, sequence);
-			MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, false);
-			StateGivenSequence etat2(nbCandidates, nbVoters, prefs, sequence);
-			MCTS<StateGivenSequence> mcts2(nbCandidates, nbVoters, true);
-			
 			std::clock_t start;
-			double duration1 = 0.0;
-			double duration2 = 0.0;
-			int finalWinner;
-			std::cout << "start mcts 1" << std::endl;
+			int compareWinner=0;
+
+			for (size_t j = 0; j < listExp.size(); ++j)
+			{
+				EXP & currentExp = listExp[j];
+				StateGivenSequence state(nbCandidates,nbVoters,prefs,sequence);
+				MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, currentExp.heuristic);
+				
+				if (j==0){
+					state.displayVec(sequence);
+					std::cout << "-------" << std::endl;
+				}
+
+				double duration = 0.0;
+				
+				if (currentExp.heuristic == "order only once")
+					state.orderCandidatesLeftOnlyOnce(sequence.back());
+
+				std::cout << "start mcts " << currentExp.heuristic << std::endl;
+				int finalWinner = -1;
+				std::vector<int> candidEliminatedSeq;
+				start = std::clock();
+
+				tupleResult res = mcts.MAXN(state,std::vector<int>(nbCandidates,-1));
+				finalWinner = res.winner;
+				state.displayVec(res.elSeq);
+
+				duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+				
+				std::cout << "duration : " << duration << std::endl;
+				//mcts.seeFinal();
+				std::cout << "-------------------------------------------------> finalWinner = " << finalWinner << std::endl;
+				currentExp.mean += duration;
+				std::cout << std::endl;
+				if (j>0 && compareWinner!=finalWinner){
+					throw "there !";
+				}
+				compareWinner = finalWinner;
+			}
+
+			std::cout << "nbCandidates : "<<nbCandidates<<", nbVoters : "<< nbVoters << "\n" << std::endl;
+
+			for (size_t j = 0; j < listExp.size(); ++j)
+			{
+				EXP currentExp = listExp[j];
+				std::cout << "mean " << currentExp.heuristic << " = " << currentExp.mean/(double)(i+1) << std::endl;
+			}
+
+			std::cout << std::endl;
 			
-			start = std::clock();
-			finalWinner = mcts.MAXN(etat);
-			std::cout << "the final winner of MAXN is " << finalWinner << std::endl;
-			duration1 = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-			std::cout << "duration == " << duration1 << std::endl;
+			//std::cout << ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: " << std::endl;
+			std::cout << "==================================================================== " << std::endl;
 
-			std::cout << "start mcts 2" << std::endl;
-			start = std::clock();
+			std::cout << std::endl;
 
-			finalWinner = mcts2.MAXN(etat2);
-			std::cout << "the final winner of MAXN is " << finalWinner << std::endl;
-			duration2 = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-			std::cout << "duration ordered == " << duration2 << std::endl;
-			std::cout << "////////////////////////////////////////////" << std::endl;
-			if (duration2 < duration1) cpt++;
+			/*double const best = std::min(duration1,std::min(duration2,std::min(duration3,std::min(duration4,std::min(duration5,duration6)))));
+			if (best == duration1)
+			{
+					cpt1++;
+			}
+			else if (best == duration2)
+			{
+					cpt2++;
+			}
+			else if (best == duration3)
+			{
+					cpt3++;
+			}
+			else if (best == duration4)
+			{
+					cpt4++;
+			}
+			else if (best == duration5)
+			{
+					cpt5++;
+			}
+			else if (best == duration6)
+			{
+					cpt6++;
+			}
+			std::cout << "current mcts " << mcts1Heuristic << " mean = " << mean1/lap << std::endl;
+			std::cout << "current mcts " << mcts2Heuristic << "simple order mean = " << mean2/lap << std::endl;
+			std::cout << "current mcts " << mcts3Heuristic << " mean = " << mean3/lap << std::endl;
+			std::cout << "current mcts " << mcts4Heuristic << " mean = " << mean4/lap << std::endl;
+			std::cout << "current mcts " << mcts5Heuristic << " mean = " << mean5/lap << std::endl;
+			std::cout << "current mcts " << mcts6Heuristic << " mean = " << mean6/lap << std::endl;
+
+			std::cout << "===============================================" << std::endl;
+			std::cout << std::endl;*/
 		}
+		/*std::cout << ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: " << std::endl;
+		std::cout << ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: " << std::endl;
 
-		std::cout << "better " << cpt << "/" << lap << std::endl;
-
+		std::cout << "mcts " << mcts1Heuristic << " : better " << cpt1 << "/" << lap << std::endl;
+		std::cout << "mcts " << mcts2Heuristic << " : better " << cpt2 << "/" << lap << std::endl;
+		std::cout << "mcts " << mcts3Heuristic << " : better " << cpt3 << "/" << lap << std::endl;
+		std::cout << "mcts " << mcts4Heuristic << " : better " << cpt4 << "/" << lap << std::endl;
+		std::cout << "mcts " << mcts5Heuristic << " : better " << cpt5 << "/" << lap << std::endl;
+		std::cout << "mcts " << mcts6Heuristic << " : better " << cpt6 << "/" << lap << std::endl;
+		
+		std::cout << std::endl;
+		std::cout << "   nbCandidates : "<<nbCandidates<<" nbVoters : "<< nbVoters << std::endl;
+		std::cout << std::endl;
+		
+		std::cout << "mean maxn " << mcts1Heuristic << " = " << mean1/lap << std::endl;
+		std::cout << "mean maxn " << mcts2Heuristic << " = " << mean2/lap << std::endl;
+		std::cout << "mean maxn " << mcts3Heuristic << " =" << mean3/lap << std::endl;
+		std::cout << "mean maxn " << mcts4Heuristic << " = " << mean4/lap << std::endl;
+		std::cout << "mean maxn " << mcts5Heuristic << " = " << mean5/lap << std::endl;
+		std::cout << "mean maxn " << mcts6Heuristic << " = " << mean6/lap << std::endl;
 		/*for (int j = 0; j < nbCandidates-1; ++j)
 		{
 			//std::cout << j << "/" << nbCandidates-2 << std::endl;
@@ -308,7 +425,7 @@ int main(){
 
 		StateCentralAuthority etat(nbCandidates, nbVoters, prefs, nbPrefs);
 
-		MCTS<StateCentralAuthority> mcts(nbCandidates, nbVoters, false);
+		MCTS<StateCentralAuthority> mcts(nbCandidates, nbVoters);
 		std::cout << "nbCandidates : " << nbCandidates << std::endl;
 		std::cout << "nbVoters : " << nbVoters << std::endl;
 		for (int j = 0; j < nbCandidates-1; ++j)
