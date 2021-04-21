@@ -97,53 +97,63 @@ int main(){
 	int const UCTrepeat = 50;
 
 	//SAVE DATA
-	/*std::string const nomFichier("/home/ulysse/Documents/Stage/Code/COSMOCarlo/durationDataMAXN.txt");
-	std::ofstream monFlux(nomFichier.c_str());
+	if (CONTEXT=="SAVE")
+	{
+		std::string const nomFichier("/home/ulysse/Documents/Stage/Code/COSMOCarlo/durationData.txt");
+		std::ofstream monFlux(nomFichier.c_str());
 
-	std::clock_t start;
-    double duration = 0.0;
-= 0
-    if(monFlux)    
-    {
-    	int nbCandidates = 0;
-		int nbVoters = 0;
-		std::vector<int> seq;
-        monFlux << "#IC" << std::endl;
-        monFlux << "nbCandidates , nbVoters , duration" << std::endl;
-		int i=0;
+		std::clock_t start;
+	    double duration = 0.0;
+	    double mean_duration = 0.0;
 
-		while (duration < 5.0){
-			i++;
-			nbCandidates += 10;
-			
-			for (nbVoters = nbCandidates/5 +1; nbVoters < nbCandidates-1; nbVoters+=5)
+	    if(monFlux)    
+	    {
+	    	int nbCandidates = 0;
+			int nbVoters = 0;
+			std::vector<int> seq;
+	        monFlux << "#IC - 'simple pruning + simple order' " << std::endl;
+	        monFlux << "nbCandidates , nbVoters , duration" << std::endl;
+
+			for (nbVoters = 2; nbVoters < 20; ++nbVoters)
 			{
-				std::vector<std::vector<int>> prefs(nbVoters);
-				std::vector<int> sequence;
+				mean_duration = 0.0;
+				nbCandidates = 3/2*nbVoters;
+				while (mean_duration < 50.0){
+					++nbCandidates;
+					std::cout << "===========================================" << std::endl;
+					mean_duration = 0.0;
+					std::cout << nbCandidates << "," << nbVoters << ": ";
+					for (int k = 0; k < 10; ++k)
+					{
+						std::cout << (k+1) << "/10 : "; 
+						std::vector<std::vector<int>> prefs(nbVoters);
+						std::vector<int> sequence;
 
-				randomSequence(sequence, nbCandidates, nbVoters);
-				RandomPrefsGenerate(prefs, nbCandidates, nbVoters);
-				
-				start = std::clock();
+						randomSequence(sequence, nbCandidates, nbVoters);
+						RandomPrefsGenerate(prefs, nbCandidates, nbVoters);
+						
+						start = std::clock();
+					
+						StateGivenSequence state(nbCandidates,nbVoters,prefs,sequence);
+						MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, "simple pruning + simple order");
 
-				StateGivenSequence etat(nbCandidates, nbVoters, prefs, sequence);
-				MCTS<StateGivenSequence> mcts;
+						tupleResult res = mcts.MAXN(state,std::vector<int>(nbCandidates,-1));
 
-				int finalWinner = mcts.MAXN(etat, nbCandidates-1);
-
-				duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-
-        		
-        		monFlux << nbCandidates << "," << nbVoters << "," << duration << std::endl;
-        		std::cout << nbCandidates << "," << nbVoters << "," << duration << std::endl;
-
+						duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+	        			std::cout << duration << ", " << std::endl;
+						mean_duration += duration;
+		        		
+					}
+					mean_duration/=10.0;
+	        		std::cout << nbCandidates << "," << nbVoters << "," << mean_duration << std::endl;
+	        		monFlux << nbCandidates << "," << nbVoters << "," << mean_duration << std::endl;
+				}
 			}
-		}
-    }
-    else
-    {
-        std::cout << "ERREUR: Impossible d'ouvrir le fichier." << std::endl;
-    }*/
+	    } else
+	    {
+	        std::cout << "ERREUR: Impossible d'ouvrir le fichier." << std::endl;
+	    }
+	}
 
 
 	if (CONTEXT=="2" && REPEAT)
@@ -240,17 +250,20 @@ int main(){
 		}*/
 	}else if (CONTEXT=="2" && !REPEAT)
 	{
-		std::vector<std::string> listHeuristics = {"vanilla_basic cut max", 	//don't do nothing
-									"vanilla_basic no cut",
+		std::vector<std::string> listHeuristics = {"basic", 	//don't do nothing
+									//"vanilla_basic no cut",
 									//"simple order", 
 									//"simple pruning", 
+									"simple cut",
 									//"killer",
 									//"complex pruning", 
 									//"ordered complex pruning" ,
 									//"simple order + simple pruning", 
+									//"simple order + cut", 
+									//"simple order + simple pruning + cut", 
 									//"simple pruning + killer", 
 									//"ordered complex pruning + killer"
-									"simple order + simple pruning + killer"
+									//"simple order + simple pruning + killer"
 								};
 		/*List of heuristics :
 		""   ,   "simpleOrder",  "killer"  ,   "history"   ,   "killer+simpleOrder";
@@ -266,10 +279,10 @@ int main(){
 			//newExp.mean = 0.0;
 			listExp.push_back(newExp);
 		}
-		int const nbCandidates = 8;
-		int const nbVoters = 4;
+		int const nbCandidates = 4;
+		int const nbVoters = 3;
 		
-		int const lap = 30;
+		int const lap = 1000;
 
 		for (int i = 0; i < lap; ++i)
 		{
@@ -294,7 +307,7 @@ int main(){
 			{
 				EXP & currentExp = listExp[j];
 				StateGivenSequence state(nbCandidates,nbVoters,prefs,sequence);
-				MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, currentExp.heuristic);
+				MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, currentExp.heuristic, prefs);
 				
 				if (j==0){
 					state.displayVec(sequence);
@@ -316,7 +329,7 @@ int main(){
 				state.displayVec(res.elSeq);
 
 				duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-				
+				currentExp.cpt += mcts.cpteur;
 				std::cout << "duration : " << duration << std::endl;
 				//mcts.seeFinal();
 				std::cout << "-------------------------------------------------> finalWinner = " << finalWinner << std::endl;
@@ -334,6 +347,7 @@ int main(){
 			{
 				EXP currentExp = listExp[j];
 				std::cout << "mean " << currentExp.heuristic << " = " << currentExp.mean/(double)(i+1) << std::endl;
+				std::cout << "cpt maxn call " << currentExp.heuristic << " = " << currentExp.cpt <<"\n"<< std::endl;
 			}
 
 			std::cout << std::endl;
@@ -398,7 +412,7 @@ int main(){
 		std::cout << "mean maxn " << mcts4Heuristic << " = " << mean4/lap << std::endl;
 		std::cout << "mean maxn " << mcts5Heuristic << " = " << mean5/lap << std::endl;
 		std::cout << "mean maxn " << mcts6Heuristic << " = " << mean6/lap << std::endl;
-		/*for (int j = 0; j < nbCandidates-1; ++j)
+		for (int j = 0; j < nbCandidates-1; ++j)
 		{
 			//std::cout << j << "/" << nbCandidates-2 << std::endl;
 			int move = mcts.BestMoveUCT(etat, 1000, true); //true 'cause mutliplayer

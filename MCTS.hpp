@@ -38,17 +38,20 @@ class MCTS
 	std::vector<int> killerTable;	 //
 	int nbCandidates;
 	int nbVoters;
+	std::vector<std::vector<int>> votersPreferences;
 	std::string heuristic;
-	int cpteur = 0;
-	int cpteurUtile = 0;
+	//int cpteurUtile = 0;
 	std::vector<int> eliminationSeq;	//sequence of each candidate eliminated
 
 	public :
-	MCTS(int _nbCandidates, int _nbVoters, std::string _heuristic="")
+	int cpteur = 0;
+
+	MCTS(int _nbCandidates, int _nbVoters, std::string _heuristic="",const std::vector<std::vector<int>>&  _votersPreferences=std::vector<std::vector<int>>())
 	{
 		heuristic = _heuristic;
 		nbCandidates = _nbCandidates;
 		nbVoters = _nbVoters;
+		votersPreferences = _votersPreferences;
 		eliminationSeq = std::vector<int>(nbCandidates,0);
 		if (heuristic.find("history") != std::string::npos)
 		{
@@ -170,13 +173,16 @@ class MCTS
 		return maxTuple;
 	}*/
 
-	tupleResult MAXN(StateContext s, std::vector<int> pruningValues, int depth=0)
+	tupleResult MAXN(StateContext s, std::vector<int> pruningValues, int parentVoter=-1, int bestWinnerParent=-1, int depth=0)
 	{
+		cpteur++;
 		if (s.getCandidatesLeft().size() == 2)
 		{
 			int candidateEliminated = s.eraseLeastPreferedSincere();
 			std::vector<int> v = {candidateEliminated};
 			tupleResult res = {s.getCandidatesLeft()[0], v};
+			std::cout << "-------------------------------> " << s.getCurrentVoter() << " eliminate candidate " << candidateEliminated << " - - - > winner = " << res.winner << std::endl;
+
 			return res;
 		}
 
@@ -189,31 +195,41 @@ class MCTS
 		//int maxWinner = -1;
 		tupleResult maxTuple;
 		int lastEliminatedCandidate;
-		int bestEliminatedCandidate;
+		int bestEliminatedCandidate=-1;
 		int maxScore = s.scoreMaxForCurrentVoter();
+
+		//================== order child heuristic
+		if (heuristic.find("simple order") != std::string::npos ){
+		    //->order list of children == History Heuristic
+			s.orderCandidatesLeft(); 
+			/*std::cout << "before order : ";
+			cL = s.getCandidatesLeft();
+			s.displayVec(cL);*/
+		}	
+		if (heuristic.find("history") != std::string::npos)	
+		    //->order list of children == History Heuristic
+			s.orderCandidatesLeftWithHistory(historyTable); 
+		if ( (heuristic.find("killer") != std::string::npos) && s.getCandidatesLeft()[0]!=killerTable[depth]){
+		    //->order list of children == Killer Heuristic
+			s.orderCandidatesLeftWithKiller(killerTable[depth]); //, cpteur, cpteurUtile); 
+		}
+		//if (heuristic=="cache")
+			//newState.orderCandidatesLeftWithCache( cacheTable );
+		//================== =======================
 
 		for (int i = 0; i < s.getNbChild(); ++i)
 		{
+
 			//if (depth==1) s.displayVec(pruningValues);
 			StateContext newState = s.getChild(i);
 			
 			
+			if (depth==0) std::cout << "-----> ";
+			if (depth==1) std::cout << "------------------> ";
+			std::cout << currentVoter << " eliminate candidate " << newState.getLastEliminatedCandidate() << std::endl; 
+
 			int currentScore=-1;
 			tupleResult tupleRes;
-			//================== order child heuristic
-			if (heuristic.find("simple order") != std::string::npos )	
-			    //->order list of children == History Heuristic
-				newState.orderCandidatesLeft(); 
-			if (heuristic.find("history") != std::string::npos)	
-			    //->order list of children == History Heuristic
-				newState.orderCandidatesLeftWithHistory(historyTable); 
-			if ( (heuristic.find("killer") != std::string::npos) && newState.getCandidatesLeft()[0]!=killerTable[depth]){
-			    //->order list of children == Killer Heuristic
-				newState.orderCandidatesLeftWithKiller(killerTable[depth]); //, cpteur, cpteurUtile); 
-			}
-			//if (heuristic=="cache")
-				//newState.orderCandidatesLeftWithCache( cacheTable );
-			//================== =======================
 
 			//================== Pruning
 			if (heuristic.find("pruning") != std::string::npos){
@@ -250,8 +266,7 @@ class MCTS
 
 			lastEliminatedCandidate = newState.getLastEliminatedCandidate();
 
-
-			tupleRes = MAXN(newState,pruningValues, depth+1);
+			tupleRes = MAXN(newState,pruningValues, currentVoter,maxTuple.winner,depth+1);
 			
 			//jump :
 
@@ -273,18 +288,24 @@ class MCTS
 				{
 					goto end;
 				}
+				if ( (heuristic.find("cut") != std::string::npos ) && cut(s,s.getCandidatesLeft(), parentVoter, bestEliminatedCandidate, currentVoter, maxTuple.winner))
+				{
+					std::vector<int> cL = s.getCandidatesLeft();
+					s.displayVec(cL);
+					goto end;
+				}
 			}
 
 			jump : continue;
 		}
 		
 		//going through left over and repeat search if necessary
-		for (int i = 0; i < leftOver.size(); ++i)
+		for (size_t i = 0; i < leftOver.size(); ++i)
 		{
 			//std::cout << "leftOver size = " << leftOver.size() << std::endl;
 			//std::cout << currentVoter << " current max for " << i << " is " << maxScoreAction << " max to evalutate : " << leftOver[i].max << std::endl;
 			if (maxScoreAction<leftOver[i].max){
-				tupleResult tupleRes = MAXN(leftOver[i].state,pruningValues, depth+1);
+				tupleResult tupleRes = MAXN(leftOver[i].state,pruningValues, currentVoter, bestEliminatedCandidate, depth+1);
 				int currentScore = s.score(tupleRes.winner);
 				//std::cout << currentVoter << " score found for " << i << "is  = " << currentScore << std::endl;
 
@@ -302,6 +323,7 @@ class MCTS
 					{
 						goto end;
 					}
+
 				}
 			}else if (heuristic=="ordered complex pruning"){
 				break;
@@ -309,6 +331,9 @@ class MCTS
 		}
 		
 		end :
+
+		//if (depth==1) std::cout << "------------------^ "<< currentVoter << " choose to eliminate " << bestEliminatedCandidate << std::endl;
+
 		if (heuristic.find("history") != std::string::npos )	
 			historyTable[currentVoter][lastEliminatedCandidate] += 1 << depth;
 		if (heuristic.find("killer") != std::string::npos )	
@@ -319,6 +344,49 @@ class MCTS
 		//std::cout << currentVoter << " < back up result < winner : "<< maxTuple.winner << std::endl;
 		return maxTuple;
 	}
+
+
+	bool cut(StateContext s ,std::vector<int> candidates, int voter1, int c1, int voter2, int c2){
+		if (c1==-1) return false;
+		if (voter1==-1) return false;
+		
+		int valueC2;
+		s.findElement(votersPreferences[voter1], c2, valueC2);
+		valueC2 = nbCandidates-valueC2;
+		int valueC1;
+		s.findElement(votersPreferences[voter1], c1, valueC1);
+		valueC1 = nbCandidates-valueC1;
+		if (valueC2 > valueC1 ) return false;
+		//if (votersPreferences[voter1][c2] > votersPreferences[voter1][c1]) return false;
+		
+
+
+
+		s.findElement(votersPreferences[voter2], c2, valueC2);
+		valueC2 = nbCandidates-valueC2;
+		//s.findElement(votersPreferences[voter1], c1, valueC1);
+		//valueC1 = nbCandidates-valueC1;
+		for (size_t i=0; i<candidates.size(); ++i)
+		{
+			int valueCi;
+			s.findElement(votersPreferences[voter2], candidates[i], valueCi);
+			valueCi = nbCandidates-valueCi;
+			if (valueCi>= valueC2 ){
+				//std::cout << "prefs["<<voter2<<"]["<<candidates[i]<<"] >= votersPreferences[voter2][c2]"  << std::endl;
+				int valueCiBis;
+				s.findElement(votersPreferences[voter1], candidates[i], valueCiBis);
+				valueCiBis = nbCandidates-valueCiBis;
+				if (valueCiBis >= valueC1 ){
+					return false;
+				}
+				std::cout << "but prefs["<<voter1<<"]["<<candidates[i]<<"] = "<<votersPreferences[voter1][candidates[i]]<<" not > votersPreferences["<<voter1<<"]["<<c1<<"]"<<std::endl;
+			}
+		}
+		std::cout << "cut for v1 = "<< voter1 <<" c1 = "<< c1 <<" v2 = " << voter2 <<  " c2 = " << c2 << " -- and candidates left = ";// std::endl;  
+		return true;
+	}
+
+
 
 	int UCT(StateContext s, bool multiplayer = false){
 
