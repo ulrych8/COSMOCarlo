@@ -279,10 +279,10 @@ int main(){
 			//newExp.mean = 0.0;
 			listExp.push_back(newExp);
 		}
-		int const nbCandidates = 4;
+		int const nbCandidates = 7;
 		int const nbVoters = 3;
 		
-		int const lap = 1000;
+		int const lap = 100;
 
 		for (int i = 0; i < lap; ++i)
 		{

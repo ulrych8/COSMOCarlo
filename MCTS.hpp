@@ -194,6 +194,7 @@ class MCTS
 		int maxScoreAction = -1;
 		//int maxWinner = -1;
 		tupleResult maxTuple;
+		maxTuple.winner = -1;
 		int lastEliminatedCandidate;
 		int bestEliminatedCandidate=-1;
 		int maxScore = s.scoreMaxForCurrentVoter();
@@ -227,7 +228,7 @@ class MCTS
 			if (depth==0) std::cout << "-----> ";
 			if (depth==1) std::cout << "------------------> ";
 			std::cout << currentVoter << " eliminate candidate " << newState.getLastEliminatedCandidate() << std::endl; 
-
+			std::cout << " .....  parentVoter = "<<parentVoter<< " | bestWinnerParent = "<<bestWinnerParent<<std::endl;
 			int currentScore=-1;
 			tupleResult tupleRes;
 
@@ -288,7 +289,7 @@ class MCTS
 				{
 					goto end;
 				}
-				if ( (heuristic.find("cut") != std::string::npos ) && cut(s,s.getCandidatesLeft(), parentVoter, bestEliminatedCandidate, currentVoter, maxTuple.winner))
+				if ( (heuristic.find("cut") != std::string::npos ) && cut(s,s.getCandidatesLeft(), parentVoter, bestWinnerParent, currentVoter, maxTuple.winner))
 				{
 					std::vector<int> cL = s.getCandidatesLeft();
 					s.displayVec(cL);
@@ -359,9 +360,6 @@ class MCTS
 		if (valueC2 > valueC1 ) return false;
 		//if (votersPreferences[voter1][c2] > votersPreferences[voter1][c1]) return false;
 		
-
-
-
 		s.findElement(votersPreferences[voter2], c2, valueC2);
 		valueC2 = nbCandidates-valueC2;
 		//s.findElement(votersPreferences[voter1], c1, valueC1);
@@ -379,7 +377,7 @@ class MCTS
 				if (valueCiBis >= valueC1 ){
 					return false;
 				}
-				std::cout << "but prefs["<<voter1<<"]["<<candidates[i]<<"] = "<<votersPreferences[voter1][candidates[i]]<<" not > votersPreferences["<<voter1<<"]["<<c1<<"]"<<std::endl;
+				std::cout << "prefs["<<voter1<<"]["<<candidates[i]<<"] = "<<votersPreferences[voter1][candidates[i]]<<" not > votersPreferences["<<voter1<<"]["<<c1<<"]"<<std::endl;
 			}
 		}
 		std::cout << "cut for v1 = "<< voter1 <<" c1 = "<< c1 <<" v2 = " << voter2 <<  " c2 = " << c2 << " -- and candidates left = ";// std::endl;  
