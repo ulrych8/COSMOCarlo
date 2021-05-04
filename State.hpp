@@ -20,6 +20,7 @@ class State
 	std::vector<int> candidatesLeft;	//candidate not yet eliminated	
 	int nbCandidates;
 	int nbVoters;
+	int nbCandidatesLeft;
 	std::vector<std::vector<int>> votersPreferences;	// size >> m*n -- maybe use an array rather than a vector
 	//int nbPrefs;	//m*n -- maybe use an array rather than a vector
 	uint hash = 0;		//use hash in play function
@@ -34,33 +35,29 @@ class State
 		int winner = candidatesLeft[0];
 		
 		int res = 0;
-		int index;
 		for (int i = 0; i < nbVoters; ++i)
 		{
-			findElement(votersPreferences[i],winner,index);
-			res += nbCandidates-index-1;		// borda score
+			res += votersPreferences[i][winner] ;		// borda score
 		}
-		//std::cout << " res = " << res << std::endl;
+
 		return res;
 	}
 
 	int virtual score(int winner)
 	{
 		int res = 0;
-		int index;
 		for (int i = 0; i < nbVoters; ++i)
 		{
-			findElement(votersPreferences[i],winner,index);
-			res += nbCandidates-index-1;		// borda score
+			res += votersPreferences[i][winner] ;		// borda score
 		}
-		//std::cout << " res = " << res << std::endl;
+
 		return res;
 	}
 
 
 	int virtual playout()	//sincere playout 
 	{
-		if (candidatesLeft.size() < 2) return score(candidatesLeft[0]);
+		if (nbCandidatesLeft < 2) return score(candidatesLeft[0]);
 		std::vector<int> candidatesLeftCopy = candidatesLeft;
 		//for completing the sequence
 		for (int i = sequence.size() - 1; i < nbCandidates-2; ++i)	//maybe nbCandidates - 1
@@ -99,6 +96,18 @@ class State
 			if (v[i] > max){
 				index = i;
 				max = v[i];
+			}
+		}
+	}
+
+	void findWorstElement(std::vector<int> &v, int &index)
+	{
+		int min=10000000;
+		for (std::size_t i = 0; i < v.size(); ++i)
+		{
+			if (v[i] < min){
+				index = i;
+				min = v[i];
 			}
 		}
 	}
@@ -163,36 +172,27 @@ class State
 	}
 
 
-	int eraseLeastPreferedSincere(int voter, std::vector<int> &candidatesLeft){
-		//for going through voter preference backwards
-		for (int j = nbCandidates-1; j >=0; --j)
+	int eraseLeastPreferedSincere(int const &voter, std::vector<int> &candidatesLeft){
+		int min = 10000000;
+		int leastPreferedCandidate = -1;
+		int indexLeastPreferedCandidate = -1;
+		for (int i = 0; i < nbCandidatesLeft; ++i)
 		{
-			int index;
-			//checking if voter's preference can be discarded
-			if (findElement(candidatesLeft, votersPreferences[voter][j], index))
+			int & currentCandidate = candidatesLeft[i];
+			if (votersPreferences[voter][currentCandidate] < min)
 			{
-				int candidateToElminate = candidatesLeft[index];
-				candidatesLeft.erase(candidatesLeft.begin()+index);
-				return candidateToElminate;
+				min = votersPreferences[voter][currentCandidate];
+				leastPreferedCandidate = currentCandidate;
+				indexLeastPreferedCandidate = i;
 			}
 		}
-		throw "shouldn't be able to reach here";
+		candidatesLeft.erase(candidatesLeft.begin()+indexLeastPreferedCandidate);
+		nbCandidatesLeft--;
+		return leastPreferedCandidate;
 	}
 
-	int eraseLeastPreferedSincere(int voter){
-		//for going through voter preference backwards
-		for (int j = nbCandidates-1; j >=0; --j)
-		{
-			int index;
-			//checking if voter's preference can be discarded
-			if (findElement(candidatesLeft, votersPreferences[voter][j], index))
-			{
-				int candidateToElminate = candidatesLeft[index];
-				candidatesLeft.erase(candidatesLeft.begin()+index);
-				return candidateToElminate;
-			}
-		}
-		throw "shouldn't be able to reach here";
+	int eraseLeastPreferedSincere(int const &voter){
+		return eraseLeastPreferedSincere(voter, candidatesLeft);
 	}
 
 	int virtual eraseLeastPreferedSincere(){
@@ -202,7 +202,7 @@ class State
 
 	//display a given vector
 	template <typename T>
-	void displayVec(std::vector<T> &v) const{
+	static void displayVec(std::vector<T> &v){
 		for (std::size_t i = 0; i < v.size(); ++i)
 		{
 			std::cout << v[i] << " ";
@@ -221,7 +221,7 @@ class State
 
 	//true if only there is only one candidate left
 	bool terminal() const{
-		if (candidatesLeft.size()>1) return false;
+		if (nbCandidatesLeft>1) return false;
 		return true;
 	}
 
@@ -250,6 +250,10 @@ class State
 
 	int getNbCandidates() const{
 		return nbCandidates;
+	}
+
+	int getNbCandidatesLeft() const{
+		return nbCandidatesLeft;
 	}
 
 	std::vector<int> getCandidatesLeft(){

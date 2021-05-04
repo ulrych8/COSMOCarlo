@@ -28,7 +28,6 @@ class StateGivenSequence : public State
 	int indexCurrentCandidateToVote = 0;
 	int lastEliminatedCandidate=-1;
 	std::vector<int> eliminationQueue;
-	bool order = false;
 
 	public :
 
@@ -37,16 +36,15 @@ class StateGivenSequence : public State
 	StateGivenSequence( int _nbCandidates, 
 						int _nbVoters, 
 						std::vector<std::vector<int>> _votersPreferences, 
-						std::vector<int> _sequence,
-						bool _order = false)
+						std::vector<int> _sequence)
 	{
 		//srand (time(NULL));
 		nbCandidates = _nbCandidates; 
 		nbVoters = _nbVoters;
+		nbCandidatesLeft = _nbCandidates;
 		votersPreferences = _votersPreferences;
 		sequence = _sequence;
 		hashTable = std::vector<std::vector<uint>>(nbCandidates, std::vector<uint>(nbVoters));
-		order = _order;
 		for (int i = 0; i < nbCandidates; ++i)
 		{
 			candidatesLeft.push_back(i);
@@ -60,7 +58,7 @@ class StateGivenSequence : public State
 
 	int playout() override		//override to return winner and not score
 	{
-		if (candidatesLeft.size() < 2) return candidatesLeft[0];
+		if (nbCandidatesLeft < 2) return candidatesLeft[0];
 		std::vector<int> candidatesLeftCopy = candidatesLeft;	
 		
 		//for completing the sequence
@@ -77,11 +75,12 @@ class StateGivenSequence : public State
 	}
 
 	void eliminateCandidate(int candidateToElminate){
+		//eliminate candidate of index candidateToEliminate in candidatesLeft
 		int candidateElminated = candidatesLeft[candidateToElminate];
 		lastEliminatedCandidate = candidateElminated;
 
 		eliminationQueue.push_back(candidateElminated);
-		//std::cout << "candidatesLeft size : " << candidatesLeft.size() << " | must eliminate : " << candidateToElminate << std::endl;
+		//std::cout << "candidatesLeft size : " << nbCandidatesLeft << " | must eliminate : " << candidateToElminate << std::endl;
 		candidatesLeft.erase(candidatesLeft.begin()+candidateToElminate);
 
 		int voter = getCurrentVoter();
@@ -89,126 +88,101 @@ class StateGivenSequence : public State
 		hash ^= hashTable[candidateElminated][voter];
 
 		indexCurrentCandidateToVote ++;
-
+		nbCandidatesLeft--;
 	}
 
 	int eraseLeastPreferedSincere() override{
 		int voter = getCurrentVoter();
-		for (int j = nbCandidates-1; j >=0; --j)
+		int min = 10000000;
+		int leastPreferedCandidate = -1;
+		int indexLeastPreferedCandidate = -1;
+		for (int i = 0; i < nbCandidatesLeft; ++i)
 		{
-			int index;
-			//checking if voter's preference can be discarded
-			if (findElement(candidatesLeft, votersPreferences[voter][j], index))
+			int & currentCandidate = candidatesLeft[i];
+			if (votersPreferences[voter][currentCandidate] < min)
 			{
-				int candidateToElminate = candidatesLeft[index];
-				lastEliminatedCandidate = candidateToElminate;
-				candidatesLeft.erase(candidatesLeft.begin()+index);
-				return candidateToElminate;
+				min = votersPreferences[voter][currentCandidate];
+				leastPreferedCandidate = currentCandidate;
+				indexLeastPreferedCandidate = i;
 			}
 		}
-		throw "Shouldn't be able to reach here";
+		candidatesLeft.erase(candidatesLeft.begin()+indexLeastPreferedCandidate);
+		nbCandidatesLeft--;
+		return leastPreferedCandidate;
 	}
 
 	void action( int choice) override
 	{
 		eliminateCandidate(choice);
-		if (order) orderCandidatesLeft();
 	}
 
 	int score(int candidate) override
-	//this score return the evaluation of the candidate by the current voter - 1
-	//-1 is because we already took action and changed current player
 	{
 		int currentVoter = getCurrentVoter();
-		int index;
-		findElement(votersPreferences[currentVoter],candidate,index);
-		return nbCandidates - index -1;
+		return votersPreferences[currentVoter][candidate];
 	}
 
 	int scoreMaxForVoter(int voter)
 	{
-		for (int j = 0; j < nbCandidates; ++j)
+		int max = -1;
+		for (int i = 0; i < nbCandidatesLeft; ++i)
 		{
-			int index;
-			if (findElement(candidatesLeft, votersPreferences[voter][j], index))
+			if (votersPreferences[voter][candidatesLeft[i]] > max)
 			{
-				return nbCandidates - j - 1;
+				max = votersPreferences[voter][candidatesLeft[i]];
 			}
 		}
-		throw "Shouldn't be able to reach here";
+		return max;
 	} 
 
 	int scoreMinForVoter(int voter)
 	{
-		for (int j = nbCandidates-1; j >= 0; --j)
+		int min = 10000000;
+		for (int i = 0; i < nbCandidatesLeft; ++i)
 		{
-			int index;
-			if (findElement(candidatesLeft, votersPreferences[voter][j], index))
+			if (votersPreferences[voter][candidatesLeft[i]] < min)
 			{
-				return nbCandidates - j - 1;
+				min = votersPreferences[voter][candidatesLeft[i]];
 			}
 		}
-		throw "Shouldn't be able to reach here";
+		return min;
 	} 
 
 	int scoreMaxForCurrentVoter()
 	{
 		int currentVoter = getCurrentVoter();
-		for (int j = 0; j < nbCandidates; ++j)
-		{
-			int index;
-			if (findElement(candidatesLeft, votersPreferences[currentVoter][j], index))
-			{
-				return nbCandidates - j - 1;
-			}
-		}
-		throw "Shouldn't be able to reach here";
+		return scoreMaxForVoter(currentVoter);
 	}
 
 	//score max reachable with candidates left for voter of index 'indexVoter' in th seqeunce
 	int scoreMaxVoterSeqIndex(int indexVoter)
 	{
 		int voter = sequence[indexVoter];
-		for (int j = 0; j < nbCandidates; ++j)
-		{
-			int index=-1;
-			if (findElement(candidatesLeft, votersPreferences[voter][j], index))
-			{
-				return nbCandidates - j - 1;
-			}
-		}
-		throw "Shouldn't be able to reach here";
+		return scoreMaxForVoter(voter);
 	}
 
 
-	//only slowing thungs down.............
 	void orderCandidatesLeft()
 	{
 		int currentVoter = getCurrentVoter();
-		std::vector<int> candidatesLeftOrdered;
-		for (int i = nbCandidates-1; i >= 0; --i)
-		{
-			int index;
-			if (findElement(candidatesLeft, votersPreferences[currentVoter][i], index))
-			{
-				candidatesLeftOrdered.push_back(votersPreferences[currentVoter][i]);
-			}
-		}
-		candidatesLeft = candidatesLeftOrdered;
+		orderCandidatesLeftForVoter(currentVoter);
 	}
 
-	void orderCandidatesLeftOnlyOnce(int voter)
+	//previously orderCandidatesLeftOnlyOnce
+	void orderCandidatesLeftForVoter(int voter)
 	{
 		std::vector<int> candidatesLeftOrdered;
-		for (int i = 0; i < nbCandidates; ++i)
+		std::vector<int> scoresVoter = candidateToScoreForVoter(candidatesLeft, voter);
+		int index;
+		for (int i = 0; i < nbCandidatesLeft; ++i)
 		{
-			int index;
-			if (findElement(candidatesLeft, votersPreferences[voter][i], index))
-			{
-				candidatesLeftOrdered.push_back(votersPreferences[voter][i]);
-			}
+			findWorstElement(scoresVoter, index);
+			candidatesLeftOrdered.push_back(candidatesLeft[index]);
+			candidatesLeft.erase(candidatesLeft.begin()+index);
+			scoresVoter.erase(scoresVoter.begin()+index);
 		}
 		candidatesLeft = candidatesLeftOrdered;
+
 	}
 
 	void orderCandidatesLeftWithHistory(std::vector<std::vector<uint>> histTable)
@@ -217,7 +191,7 @@ class StateGivenSequence : public State
 		std::map<int,uint> m;
 		for (int i=0; i < nbCandidates; i++) m[i] = histTable[currentVoter][i];
 		std::vector<int> candidatesLeftOrdered;
-		for (size_t i = 0; i < candidatesLeft.size(); ++i)
+		for (int i = 0; i < nbCandidatesLeft; ++i)
 		{
 			beginAgain:
 				std::map<int, uint>::iterator it;
@@ -239,24 +213,32 @@ class StateGivenSequence : public State
 	void orderCandidatesLeftWithKiller(int killValue)//, int& cpteur, int& cpteurUtile)
 	{
 		int index;
-		//cpteur+=1;
 		if (findElement(candidatesLeft, killValue, index))
 		{
 			candidatesLeft.erase(candidatesLeft.begin()+index);
 			candidatesLeft.insert(candidatesLeft.begin(),killValue);
-			//cpteurUtile+=1;
 		}
 
 	}
 
-	int getCurrentVoter(/*int recoil=0*/) const
+	std::vector<int> candidateToScoreForVoter(std::vector<int> candidates, int voter)
 	{
-		return sequence[indexCurrentCandidateToVote /*- recoil*/];
+		std::vector<int> scoresVoter;
+		for (size_t i = 0; i < candidates.size(); ++i)
+		{
+			scoresVoter.push_back(votersPreferences[voter][candidates[i]]);
+		}
+		return scoresVoter;
+	}
+
+	int getCurrentVoter() const
+	{
+		return sequence[indexCurrentCandidateToVote];
 	}
 
 	int getNbChild() const override
 	{
-		return candidatesLeft.size();
+		return nbCandidatesLeft;
 	}
 
 	std::vector<int> getEliminationQueue()

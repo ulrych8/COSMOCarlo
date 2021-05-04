@@ -35,6 +35,7 @@ class StateCentralAuthority : public State
 		srand (time(NULL));
 		nbCandidates = _nbCandidates; 
 		nbVoters = _nbVoters;
+		nbCandidatesLeft = nbCandidates;
 		votersPreferences = _votersPreferences;
 		nbPrefs = _nbPrefs;
 		hashTable = std::vector<std::vector<uint>>(nbCandidates, std::vector<uint>(nbVoters));
@@ -63,23 +64,8 @@ class StateCentralAuthority : public State
 	//int can be changed by using template if borda is not the only rule
 	int score() override
 	{
-		std::vector<int> votersSelected = std::vector<int>();
-		for (int i = 0; i < nbVoters; ++i)
-		{
-			votersSelected.push_back(rand() % nbPrefs);
-		}
-		
 		int winner = candidatesLeft[0];
-		
-		int res = 0;
-		int index;
-		for (int i = 0; i < nbVoters; ++i)
-		{
-			findElement(votersPreferences[votersSelected[i]],winner,index);
-			res += nbCandidates-index-1;		// borda score
-		}
-		//std::cout << " res = " << res << std::endl;
-		return res;
+		return score (winner);
 	}
 
 	int score(int winner) override
@@ -89,25 +75,15 @@ class StateCentralAuthority : public State
 		{
 			votersSelected.push_back(rand() % nbPrefs);
 		}
-		
-		int res = 0;
-		int index;
-		for (int i = 0; i < nbVoters; ++i)
-		{
-			findElement(votersPreferences[votersSelected[i]],winner,index);
-			res += nbCandidates-index-1;		// borda score
-		}
-		return res;
+		return score(winner, votersSelected);
 	}
 
 	int score(int winner, std::vector<int> votersSelected)
 	{
 		int res = 0;
-		int index;
 		for (int i = 0; i < nbVoters; ++i)
 		{
-			findElement(votersPreferences[votersSelected[i]],winner,index);
-			res += nbCandidates-index-1;		// borda score
+			res += votersPreferences[votersSelected[i]][winner];		// borda score
 		}
 		return res;
 	}

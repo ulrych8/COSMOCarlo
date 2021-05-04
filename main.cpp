@@ -4,8 +4,10 @@
 #include <stdlib.h>		//random
 #include <ctime>		//clock
 #include <fstream>		//file
+#include <iomanip>		//pretty print
 
    
+#include "StatePreferenceVariation.hpp"
 #include "StateCentralAuthority.hpp"
 #include "StateGivenSequence.hpp"
 #include "MCTS.hpp"
@@ -74,6 +76,12 @@ void randomSequence(std::vector<int> &seq, int const& nbCandidates, int const& n
 	std::random_shuffle(seq.begin(), seq.end());
 }
 
+int factorial( int n)
+{
+	if (n==1) return 1;
+	return (n*factorial(n-1));
+}
+
 
 //====================================================================
 //
@@ -91,13 +99,148 @@ struct EXP{
 int main(){
 	srand (time(NULL));
 
-	std::string CONTEXT = "2";
-	bool REPEAT = false;
+	std::string CONTEXT = "TEST";
+	//"2 - candidates and voters change size"
+	//"SAVE"
+	//"2 - heuristic variration"
+	//"3" 
 
 	int const UCTrepeat = 50;
 
+
+	if (CONTEXT=="TEST"){
+		int nbCandidates = 8;
+		int nbVoters = 2;
+		std::vector<std::vector<int>> seqPossible = {
+								{0, 1, 1, 0, 1, 0, 0},
+								{0, 0, 1, 1, 1, 0, 0},
+								{0, 1, 0, 1, 0, 0, 1},
+								{0, 1, 1, 0, 0, 1, 0},
+								{0, 0, 1, 1, 0, 0, 1},
+								{0, 0, 1, 1, 1, 1, 0},
+								{0, 0, 1, 0, 0, 0, 1},
+								{0, 1, 0, 0, 0, 1, 1},
+								{0, 0, 0, 1, 1, 1, 1},
+								{0, 0, 0, 0, 1, 1, 1},
+								//{0, 0, 0, 0, 0, 1, 1},
+								//{0, 0, 0, 0, 0, 0, 1},
+								{0, 1, 0, 1, 1, 0, 0},
+								{0, 1, 1, 1, 0, 0, 1},
+								{0, 0, 1, 0, 0, 1, 0}, 
+								{0, 0, 1, 0, 1, 0, 0},
+								{0, 1, 0, 1, 0, 1, 0},
+								{0, 0, 1, 1, 0, 1, 0},
+								{0, 0, 1, 1, 0, 1, 1},
+								{0, 1, 1, 0, 1, 0, 0},
+								{0, 1, 0, 0, 1, 0, 1},
+		};
+
+		for (size_t i = 0; i < seqPossible.size(); ++i)
+		{
+			std::vector<int> seq=seqPossible[i];
+			double meanRatio = 0.0;
+			std::cout << "start .... " << (i+1) << "/" << seqPossible.size() << std::endl;
+			
+			std::clock_t start = std::clock();;
+		    double duration = 0.0;
+
+			StatePreferenceVariation prefVar(nbCandidates, nbVoters);
+
+			std::vector<std::vector<int>> prefs;
+			std::vector<std::vector<int>> worstPrefs;
+			std::vector<std::vector<int>> bestPrefs;
+			std::vector<int> worstElimQueue;
+			std::vector<int> bestElimQueue;
+			int worstWinnerStrat;
+			int bestWinnerStrat;
+			int worstWinnerSincere;
+			int bestWinnerSincere;
+			std::vector<int> v;
+			for (int i = 0; i < nbCandidates; ++i) v.push_back(i);
+			prefs.push_back(v);
+			prefs.push_back(v);
+			//prefs[1] = v;
+			int socialWelfare = 1000;
+			double worstStrategicDivBySincere = 100;
+			double bestStrategicDivBySincere = 0;
+			//displayPrefs(prefs, nbCandidates, nbVoters);
+			int combinaisons = factorial(8);
+			int lap = 1;
+			do{
+				StateGivenSequence state(nbCandidates,nbVoters,prefs,seq);
+				MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, "simple order + simple pruning + cut -1", prefs);
+				tupleResult res = mcts.MAXN(state,std::vector<int>(nbCandidates,-1));
+				// MAXN 
+				// if (prefs[0][res.winner] + prefs[1][res.winner] < socialWelfare)
+				// {
+				// 	socialWelfare = prefs[0][res.winner] + prefs[1][res.winner];
+				// 	worstWinner = res.winner;
+				// 	worstPrefs = prefs;
+				// }
+				// MIN
+				// if (std::min(prefs[0][res.winner], prefs[1][res.winner]) < socialWelfare)
+				// {
+				// 	socialWelfare = std::min(prefs[0][res.winner], prefs[1][res.winner]);
+				// 	worstWinner = res.winner;
+				// 	worstPrefs = prefs;
+				// }
+				//Playout
+				// int winner = state.playout();
+				// if (prefs[0][winner] + prefs[1][winner] < socialWelfare)
+				// {
+				// 	socialWelfare = prefs[0][winner] + prefs[1][winner] ;
+				// 	worstWinner = winner;
+				// 	worstPrefs = prefs;
+				// }
+				StateGivenSequence state2(nbCandidates,nbVoters,prefs,seq);
+				int winner = state2.playout();
+
+				double rapport = (prefs[0][res.winner] + prefs[1][res.winner])/(double)(prefs[0][winner] + prefs[1][winner]);
+				if (rapport < worstStrategicDivBySincere)
+				{
+					worstStrategicDivBySincere = rapport;
+				 	worstWinnerSincere = winner;
+				 	worstWinnerStrat = res.winner;
+				 	worstPrefs = prefs;
+				 	//worstElimQueue = 
+				}
+				if (rapport > bestStrategicDivBySincere)
+				{
+					bestStrategicDivBySincere = rapport;
+				 	bestWinnerSincere = winner;
+				 	bestWinnerStrat = res.winner;
+				 	bestPrefs = prefs;
+				}
+				meanRatio += rapport;
+				std::cout << '\r' <<  std::setw(5) << std::setfill('0') << lap << "/" << combinaisons << std::flush;
+				lap++;
+			}while(prefVar.next_permutation(prefs[1].begin(), prefs[1].end()));
+			std::cout << std::endl;
+			
+			duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+	        std::cout << "duration : " << duration << std::endl;
+			
+			std::cout << "sequence = ";
+			State::displayVec(seq);
+			//std::cout << "worst socialWelfare = " << socialWelfare << std::endl;
+			meanRatio /= combinaisons;
+			std::cout << "mean ratio = " << meanRatio << std::endl;
+			std::cout << "---------------------------------------" << std::endl;
+			std::cout << "best ratio = " << bestStrategicDivBySincere << std::endl;
+			displayPrefs(bestPrefs, nbCandidates, nbVoters);
+			std::cout << "winner strategic is candidate "<< bestWinnerStrat << " ---> score = " << bestPrefs[0][bestWinnerStrat] + bestPrefs[1][bestWinnerStrat] << std::endl;
+			std::cout << "winner sincere is candidate "<< bestWinnerSincere << " ---> score = " << bestPrefs[0][bestWinnerSincere] + bestPrefs[1][bestWinnerSincere] << std::endl;
+			std::cout << "---------------------------------------" << std::endl;
+			std::cout << "worst ratio = " << worstStrategicDivBySincere << std::endl;
+			displayPrefs(worstPrefs, nbCandidates, nbVoters);
+			std::cout << "winner strategic is candidate "<< worstWinnerStrat << " ---> score = " << worstPrefs[0][worstWinnerStrat] + worstPrefs[1][worstWinnerStrat] << std::endl;
+			std::cout << "winner sincere is candidate "<< worstWinnerSincere << " ---> score = " << worstPrefs[0][worstWinnerSincere] + worstPrefs[1][worstWinnerSincere] << std::endl;
+			std::cout << "=======================================" << std::endl;
+		
+		}
+	}
 	//SAVE DATA
-	if (CONTEXT=="SAVE")
+	else if (CONTEXT=="SAVE")
 	{
 		std::string const nomFichier("/home/ulysse/Documents/Stage/Code/COSMOCarlo/durationData.txt");
 		std::ofstream monFlux(nomFichier.c_str());
@@ -156,7 +299,7 @@ int main(){
 	}
 
 
-	if (CONTEXT=="2" && REPEAT)
+	if (CONTEXT == "2 - candidates and voters change size")
 	{
 		//int const nbCandidates = 8;
 		//int const nbVoters = 4;
@@ -239,31 +382,28 @@ int main(){
 			std::cout << "std : " << stdvar << std::endl;
 			std::cout << "========================================" << std::endl;
 		}
-		/*for (int nbCandidates = 10; nbCandidates < 100; nbCandidates+=10)
-		{
-			int loopThrough[] = {nbCandidates/4, nbCandidates/2, 3*nbCandidates/4};
-			for (const int &nbVoters : loopThrough)
-			//for (int nbVoters = nbCandidates/5; nbVoters < nbCandidates-1; nbVoters+=5)
-			{
-				//=======================================================
-			}
-		}*/
-	}else if (CONTEXT=="2" && !REPEAT)
+	}else if (CONTEXT=="2 - heuristic variration")
 	{
 		std::vector<std::string> listHeuristics = {"basic", 	//don't do nothing
 									//"vanilla_basic no cut",
-									//"simple order", 
-									//"simple pruning", 
-									"simple cut",
+									"simple order", 
+									"simple order -1", 
+									"simple pruning", 
+									"cut",
 									//"killer",
+									//"history",
 									//"complex pruning", 
 									//"ordered complex pruning" ,
 									//"simple order + simple pruning", 
 									//"simple order + cut", 
 									//"simple order + simple pruning + cut", 
 									//"simple pruning + killer", 
-									//"ordered complex pruning + killer"
-									//"simple order + simple pruning + killer"
+									"simple order + simple pruning + cut",
+									"simple order + simple pruning + cut -1",
+									//"simple order + simple pruning + killer",
+									//"simple order + simple pruning + killer + simple cut",
+									//"simple pruning + cut + history",
+									//"ordered complex pruning + simple order + simple pruning + cut" ,
 								};
 		/*List of heuristics :
 		""   ,   "simpleOrder",  "killer"  ,   "history"   ,   "killer+simpleOrder";
@@ -279,10 +419,10 @@ int main(){
 			//newExp.mean = 0.0;
 			listExp.push_back(newExp);
 		}
-		int const nbCandidates = 7;
-		int const nbVoters = 3;
+		int const nbCandidates = 10;
+		int const nbVoters = 5;
 		
-		int const lap = 100;
+		int const lap = 10;
 
 		for (int i = 0; i < lap; ++i)
 		{
@@ -317,7 +457,7 @@ int main(){
 				double duration = 0.0;
 				
 				if (currentExp.heuristic == "order only once")
-					state.orderCandidatesLeftOnlyOnce(sequence.back());
+					state.orderCandidatesLeftForVoter(sequence.back());
 
 				std::cout << "start mcts " << currentExp.heuristic << std::endl;
 				int finalWinner = -1;
@@ -347,7 +487,7 @@ int main(){
 			{
 				EXP currentExp = listExp[j];
 				std::cout << "mean " << currentExp.heuristic << " = " << currentExp.mean/(double)(i+1) << std::endl;
-				std::cout << "cpt maxn call " << currentExp.heuristic << " = " << currentExp.cpt <<"\n"<< std::endl;
+				std::cout << "cpt maxn call = " << currentExp.cpt <<"\n"<< std::endl;
 			}
 
 			std::cout << std::endl;
@@ -356,81 +496,16 @@ int main(){
 			std::cout << "==================================================================== " << std::endl;
 
 			std::cout << std::endl;
-
-			/*double const best = std::min(duration1,std::min(duration2,std::min(duration3,std::min(duration4,std::min(duration5,duration6)))));
-			if (best == duration1)
-			{
-					cpt1++;
-			}
-			else if (best == duration2)
-			{
-					cpt2++;
-			}
-			else if (best == duration3)
-			{
-					cpt3++;
-			}
-			else if (best == duration4)
-			{
-					cpt4++;
-			}
-			else if (best == duration5)
-			{
-					cpt5++;
-			}
-			else if (best == duration6)
-			{
-					cpt6++;
-			}
-			std::cout << "current mcts " << mcts1Heuristic << " mean = " << mean1/lap << std::endl;
-			std::cout << "current mcts " << mcts2Heuristic << "simple order mean = " << mean2/lap << std::endl;
-			std::cout << "current mcts " << mcts3Heuristic << " mean = " << mean3/lap << std::endl;
-			std::cout << "current mcts " << mcts4Heuristic << " mean = " << mean4/lap << std::endl;
-			std::cout << "current mcts " << mcts5Heuristic << " mean = " << mean5/lap << std::endl;
-			std::cout << "current mcts " << mcts6Heuristic << " mean = " << mean6/lap << std::endl;
-
-			std::cout << "===============================================" << std::endl;
-			std::cout << std::endl;*/
 		}
-		/*std::cout << ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: " << std::endl;
-		std::cout << ":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: " << std::endl;
-
-		std::cout << "mcts " << mcts1Heuristic << " : better " << cpt1 << "/" << lap << std::endl;
-		std::cout << "mcts " << mcts2Heuristic << " : better " << cpt2 << "/" << lap << std::endl;
-		std::cout << "mcts " << mcts3Heuristic << " : better " << cpt3 << "/" << lap << std::endl;
-		std::cout << "mcts " << mcts4Heuristic << " : better " << cpt4 << "/" << lap << std::endl;
-		std::cout << "mcts " << mcts5Heuristic << " : better " << cpt5 << "/" << lap << std::endl;
-		std::cout << "mcts " << mcts6Heuristic << " : better " << cpt6 << "/" << lap << std::endl;
-		
-		std::cout << std::endl;
-		std::cout << "   nbCandidates : "<<nbCandidates<<" nbVoters : "<< nbVoters << std::endl;
-		std::cout << std::endl;
-		
-		std::cout << "mean maxn " << mcts1Heuristic << " = " << mean1/lap << std::endl;
-		std::cout << "mean maxn " << mcts2Heuristic << " = " << mean2/lap << std::endl;
-		std::cout << "mean maxn " << mcts3Heuristic << " =" << mean3/lap << std::endl;
-		std::cout << "mean maxn " << mcts4Heuristic << " = " << mean4/lap << std::endl;
-		std::cout << "mean maxn " << mcts5Heuristic << " = " << mean5/lap << std::endl;
-		std::cout << "mean maxn " << mcts6Heuristic << " = " << mean6/lap << std::endl;
-		for (int j = 0; j < nbCandidates-1; ++j)
-		{
-			//std::cout << j << "/" << nbCandidates-2 << std::endl;
-			int move = mcts.BestMoveUCT(etat, 1000, true); //true 'cause mutliplayer
-			etat.action(move);
-		}
-		std::cout << "the final winner of UCT is :";
-		std::cout << etat.getCandidatesLeft()[0] << std::endl;*/
-
-
 	}
 
-	if (CONTEXT=="3")
+	else if (CONTEXT=="3")
 	{
 	    int const nbCandidates = 8;
-		int const nbVoters = 4;
+		int const nbVoters = 2;
 
 		int const nbPrefs = 100000;
-		int const UCTrepeat = 100;
+		int const UCTrepeat = 15;
 
 		std::vector<std::vector<int>> prefs(nbPrefs);
 
@@ -442,10 +517,13 @@ int main(){
 		MCTS<StateCentralAuthority> mcts(nbCandidates, nbVoters);
 		std::cout << "nbCandidates : " << nbCandidates << std::endl;
 		std::cout << "nbVoters : " << nbVoters << std::endl;
-		for (int j = 0; j < nbCandidates-1; ++j)
+		//we always start with voter 0	
+		etat.action(0);
+		for (int j = 1; j < nbCandidates-1; ++j)
 		{
-			std::cout << j << "/" << nbCandidates-2 << std::endl;
+			std::cout << (j+1) << "/" << nbCandidates-1 << std::endl;
 			int move = mcts.BestMoveUCT(etat, UCTrepeat);
+			std::cout << " - " << std::endl;
 			etat.action(move);
 		}
 
