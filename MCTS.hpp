@@ -337,14 +337,14 @@ class MCTS
 	}
 
 	int BestMoveUCT(StateContext &s, int const &n, bool multiplayer = false) {
-		std::cout << " start UCT ";
+		//std::cout << " start UCT ";
 		for (int i = 0; i < n; ++i)
 		{
 			StateContext sTemp(s);
 			UCT(sTemp, multiplayer);
-			std::cout << " . ";
+			//std::cout << " . ";
 		}
-		std::cout << " end UCT ";
+		//std::cout << " end UCT ";
 		
 		int best = 0;
 		if ( infoTable.find(s.getHash()) == infoTable.end())

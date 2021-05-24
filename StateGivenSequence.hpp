@@ -56,13 +56,35 @@ class StateGivenSequence : public State
 		}
 	}
 
+	int playout(bool addEliminationQueue)		//override to return winner and not score
+	{
+		if (nbCandidatesLeft < 2)
+		{
+			//State::displayVec(candidatesLeft);
+			return candidatesLeft[0];
+		}
+		std::vector<int> candidatesLeftCopy = candidatesLeft;	
+		
+		//for completing the sequence
+		for (int i = indexCurrentCandidateToVote; i < nbCandidates-1; ++i)	//maybe nbCandidates - 1
+		{
+			int candidateElminated = State::eraseLeastPreferedSincere(sequence[i], candidatesLeftCopy);
+			if (addEliminationQueue)
+			{
+				eliminationQueue.push_back(candidateElminated);
+				//std::cout << "blaf " << candidateElminated << " euh" << std::endl;
+			}
+		}
+		return candidatesLeftCopy[0];
+	}
+
 	int playout() override		//override to return winner and not score
 	{
 		if (nbCandidatesLeft < 2) return candidatesLeft[0];
 		std::vector<int> candidatesLeftCopy = candidatesLeft;	
 		
 		//for completing the sequence
-		for (int i = indexCurrentCandidateToVote; i < nbCandidates-2; ++i)	//maybe nbCandidates - 1
+		for (int i = indexCurrentCandidateToVote; i < nbCandidates-1; ++i)	//maybe nbCandidates - 1
 		{
 			State::eraseLeastPreferedSincere(sequence[i], candidatesLeftCopy);
 		}

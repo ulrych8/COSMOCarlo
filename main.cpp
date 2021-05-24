@@ -100,6 +100,8 @@ int main(){
 	srand (time(NULL));
 
 	std::string CONTEXT = "TEST";
+	//"Find streteyproof sequence"
+	//"TEST"
 	//"2 - candidates and voters change size"
 	//"SAVE"
 	//"2 - heuristic variration"
@@ -109,11 +111,15 @@ int main(){
 
 
 	if (CONTEXT=="TEST"){
-		int nbCandidates = 8;
+		/*int nbCandidates = 8;
 		int nbVoters = 2;
 		std::vector<std::vector<int>> seqPossible = {
-								{0, 1, 1, 0, 1, 0, 0},
+								{0, 1, 1, 0, 1, 1, 0},
+								{0, 1, 0, 0, 0, 1, 0},
+								{0, 1, 1, 1, 1, 1, 0},
 								{0, 0, 1, 1, 1, 0, 0},
+								//{0, 1, 1, 0, 1, 0, 0},
+								//{0, 0, 1, 1, 1, 0, 0},		//interesting
 								{0, 1, 0, 1, 0, 0, 1},
 								{0, 1, 1, 0, 0, 1, 0},
 								{0, 0, 1, 1, 0, 0, 1},
@@ -133,7 +139,108 @@ int main(){
 								{0, 0, 1, 1, 0, 1, 1},
 								{0, 1, 1, 0, 1, 0, 0},
 								{0, 1, 0, 0, 1, 0, 1},
+		};*/
+
+		int nbCandidates = 8;
+		int nbVoters = 3;
+		std::vector<std::vector<int>> seqPossible = {
+								{0, 1, 2, 0, 2, 1, 0,},
+								{0, 1, 2, 0, 1, 2, 0,},
+								{0, 2, 0, 1, 0, 2, 0,},
+								{0, 1, 1, 2, 1, 1, 0,},
+								{0, 0, 1, 2, 1, 0, 0,},
+								{0, 2, 1, 2, 1, 2, 0,},
+								// {0, 2, 0, 1, 0, 2, 1,},
+								// {0, 2, 1, 0, 2, 2, 0},
+								// {0, 0, 2, 2, 1, 1, 0},
+								// {0, 1, 0, 2, 2, 0, 1},
+								// {0, 2, 2, 1, 1, 0, 2},	
+								// {0, 1, 0, 0, 1, 2, 0},
+								// {0, 1, 1, 0, 2, 1, 0},
+								// {0, 1, 0, 1, 2, 1, 1},
+								// {0, 2, 1, 1, 1, 2, 0},		//mean ratio = 1
+								// {0, 2, 0, 1, 0, 1, 2},  //--
+								// //{0, 0, 0, 0, 0, 1, 1},
+								// {0, 1, 2, 0, 1, 2, 0},
+								// {0, 2, 0, 1, 2, 2, 1},
+								// {0, 1, 0, 0, 1, 2, 2},
+								// {0, 2, 2, 2, 1, 1, 0}, 
+								// {0, 0, 2, 2, 0, 2, 1},
+								// {0, 0, 2, 1, 2, 2, 1},
+								// {0, 0, 1, 1, 0, 1, 0},
+								// {0, 0, 1, 1, 0, 2, 2},
+								// {0, 0, 1, 1, 2, 0, 2},
+								// {0, 2, 0, 2, 1, 2, 1},
 		};
+
+		/*int nbCandidates = 9;
+		int nbVoters = 3;
+		std::vector<std::vector<int>> seqPossible = {
+								{0, 2, 2, 2, 2, 1, 1, 0},
+								{0, 0, 1, 2, 2, 1, 1, 0},
+								{0, 1, 2, 1, 0, 2, 0, 2},
+								{0, 2, 1, 1, 1, 1, 2, 0},		//mean ratio = 1
+								{0, 1, 2, 0, 1, 2, 0, 1},
+								{0 0 0 0 1 1 1 2},	
+								{0 2 2 0 2 0 0 1},
+								{0 0 1 2 1 0 2 1},
+								{0 0 1 0 2 2 1 0},
+								{0 0 1 1 2 0 2 1 },  //--
+								{0 0 1 0 2 1 1 2},
+								{0 0 2 1 0 1 2 0},
+								{0 0 1 1 2 0 2 0}, 
+								{0 2 0 0 1 1 2 0 },
+								{0 0 1 1 2 2 0 1 },
+								{0 1 0 0 2 1 1 0},
+								{0 1 2 0 2 2 0 1},
+								{0 2 2 0 1 1 2 2 },
+								{},
+		};*/
+
+		/*int nbCandidates = 12;
+		int nbVoters = 4;
+		std::vector<std::vector<int>> seqPossible = {
+								{0, 0, 1, 2, 3, 3, 3, 2, 1, 0, 0, },
+								{0, 1, 2, 3, 2, 3, 2, 3, 2, 1, 0, },
+								{0, 1, 1, 2, 2, 3, 2, 2, 1, 1, 0, },
+								{0, 1, 1, 2, 2, 3, 2, 2, 1, 1, 0, },
+								{0, 1, 0, 2, 3, 2, 3, 2, 0, 1, 0, },
+								//{0, 0, 3, 2, 3, 2, 2, 2, 3, 0, 2, },
+								// {0, 3, 2, 3, 1, 3, 1, 3, 3, 2, 1, },
+								// {0, 1, 3, 2, 3, 2, 1, 3, 3, 0, 3, },
+								// {0, 0, 2, 3, 3, 0, 1, 2, 3, 1, 1, },
+								// {0, 3, 3, 1, 3, 3, 2, 2, 3, 2, 1, },
+								// {0, 1, 2, 1, 1, 0, 2, 2, 1, 3, 2, },
+								// {0, 3, 0, 3, 1, 1, 1, 2, 2, 0, 2, },
+								// {0, 0, 3, 3, 3, 2, 2, 0, 2, 0, 3, },
+								// {0, 1, 1, 1, 3, 3, 2, 2, 3, 1, 0, },
+								// {0, 2, 2, 1, 2, 3, 0, 2, 1, 0, 2, },
+								// {0, 0, 1, 3, 1, 3, 3, 0, 0, 1, 0, },
+								// {0, 1, 2, 1, 3, 1, 0, 3, 1, 3, 1, },
+								// {0, 0, 0, 3, 0, 1, 1, 2, 0, 3, 3, },
+								// {0, 0, 1, 2, 3, 0, 2, 0, 2, 0, 1, },
+								// {0, 0, 3, 2, 2, 0, 1, 3, 1, 0, 2, },
+								// {0, 1, 2, 0, 2, 2, 0, 2, 1, 1, 2, },
+								// {0, 3, 2, 0, 0, 1, 1, 2, 2, 0, 2, },
+								// {0, 3, 3, 0, 0, 3, 2, 3, 2, 0, 3, },
+								// {0, 3, 2, 2, 3, 3, 0, 1, 0, 1, 0, },
+								// {0, 1, 3, 2, 0, 3, 0, 2, 2, 3, 2, },
+
+								// //{0, 3, 0, 0, 2, 0, 0, 3, 1, 1, 0, },
+								// //{0, 1, 2, 0, 2, 1, 3, 3, 3, 2, 1, },
+								// //{0, 2, 0, 2, 3, 3, 0, 1, 3, 2, 1, },
+								// {0, 0, 2, 2, 2, 3, 1, 0, 3, 1, 2, },
+								// {0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, },
+								// {0, 1, 3, 3, 0, 0, 0, 2, 2, 1, 3, },	
+								// {0, 2, 0, 1, 3, 2, 2, 0, 2, 1, 3, },
+								// {0, 0, 1, 3, 0, 1, 0, 3, 3, 1, 1, },
+								// {0, 1, 0, 3, 3, 2, 1, 3, 2, 3, 2, },
+								// {0, 2, 1, 1, 0, 1, 3, 3, 0, 0, 2, },
+								// {0, 3, 0, 2, 0, 3, 3, 1, 1, 2, 0, },
+								// {0, 2, 0, 2, 1, 1, 2, 1, 3, 0, 1, }
+		};*/
+		int timeLimit = 200;
+
 
 		for (size_t i = 0; i < seqPossible.size(); ++i)
 		{
@@ -155,86 +262,106 @@ int main(){
 			int bestWinnerStrat;
 			int worstWinnerSincere;
 			int bestWinnerSincere;
+			std::vector<int> worstStrategicSequence;
+			std::vector<int> worstSincereSequence;
+			std::vector<int> bestStrategicSequence;
+			std::vector<int> bestSincereSequence;
 			std::vector<int> v;
 			for (int i = 0; i < nbCandidates; ++i) v.push_back(i);
-			prefs.push_back(v);
-			prefs.push_back(v);
-			//prefs[1] = v;
-			int socialWelfare = 1000;
+			for (int i = 0; i < nbVoters; ++i) prefs.push_back(v);
+			//prefs[1] = {3,7,4,6,0,1,5,2};
+			int sincereSocialWelfare;
+			int strategicSocialWelfare;
 			double worstStrategicDivBySincere = 100;
 			double bestStrategicDivBySincere = 0;
 			//displayPrefs(prefs, nbCandidates, nbVoters);
 			int combinaisons = factorial(8);
 			int lap = 1;
 			do{
-				StateGivenSequence state(nbCandidates,nbVoters,prefs,seq);
-				MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, "simple order + simple pruning + cut -1", prefs);
-				tupleResult res = mcts.MAXN(state,std::vector<int>(nbCandidates,-1));
-				// MAXN 
-				// if (prefs[0][res.winner] + prefs[1][res.winner] < socialWelfare)
-				// {
-				// 	socialWelfare = prefs[0][res.winner] + prefs[1][res.winner];
-				// 	worstWinner = res.winner;
-				// 	worstPrefs = prefs;
-				// }
-				// MIN
-				// if (std::min(prefs[0][res.winner], prefs[1][res.winner]) < socialWelfare)
-				// {
-				// 	socialWelfare = std::min(prefs[0][res.winner], prefs[1][res.winner]);
-				// 	worstWinner = res.winner;
-				// 	worstPrefs = prefs;
-				// }
-				//Playout
-				// int winner = state.playout();
-				// if (prefs[0][winner] + prefs[1][winner] < socialWelfare)
-				// {
-				// 	socialWelfare = prefs[0][winner] + prefs[1][winner] ;
-				// 	worstWinner = winner;
-				// 	worstPrefs = prefs;
-				// }
-				StateGivenSequence state2(nbCandidates,nbVoters,prefs,seq);
-				int winner = state2.playout();
+				//do{
+					RandomPrefsGenerate(prefs, nbCandidates, nbVoters);
+					StateGivenSequence state(nbCandidates,nbVoters,prefs,seq);
+					MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, "simple order + simple pruning + cut -1", prefs);
+					tupleResult res = mcts.MAXN(state,std::vector<int>(nbCandidates,-1));
 
-				double rapport = (prefs[0][res.winner] + prefs[1][res.winner])/(double)(prefs[0][winner] + prefs[1][winner]);
-				if (rapport < worstStrategicDivBySincere)
-				{
-					worstStrategicDivBySincere = rapport;
-				 	worstWinnerSincere = winner;
-				 	worstWinnerStrat = res.winner;
-				 	worstPrefs = prefs;
-				 	//worstElimQueue = 
-				}
-				if (rapport > bestStrategicDivBySincere)
-				{
-					bestStrategicDivBySincere = rapport;
-				 	bestWinnerSincere = winner;
-				 	bestWinnerStrat = res.winner;
-				 	bestPrefs = prefs;
-				}
-				meanRatio += rapport;
-				std::cout << '\r' <<  std::setw(5) << std::setfill('0') << lap << "/" << combinaisons << std::flush;
-				lap++;
-			}while(prefVar.next_permutation(prefs[1].begin(), prefs[1].end()));
+					StateGivenSequence state2(nbCandidates,nbVoters,prefs,seq);
+					int winner = state2.playout(true);		//true to save eliminationQueue
+
+					strategicSocialWelfare = 0; 
+					sincereSocialWelfare = 0;
+					for (int i = 0; i < nbVoters; ++i)
+					{
+						strategicSocialWelfare += prefs[i][res.winner];
+						sincereSocialWelfare += prefs[i][winner];
+					}
+					double rapport = strategicSocialWelfare/(double)(sincereSocialWelfare);
+					if (rapport < worstStrategicDivBySincere)
+					{
+						worstStrategicDivBySincere = rapport;
+					 	worstWinnerSincere = winner;
+					 	worstWinnerStrat = res.winner;
+					 	worstPrefs = prefs;
+					 	worstSincereSequence = state2.getEliminationQueue();
+					 	worstStrategicSequence = res.elSeq;
+					}
+					if (rapport > bestStrategicDivBySincere)
+					{
+						bestStrategicDivBySincere = rapport;
+					 	bestWinnerSincere = winner;
+					 	bestWinnerStrat = res.winner;
+					 	bestPrefs = prefs;
+					 	bestSincereSequence = state2.getEliminationQueue();
+					 	bestStrategicSequence = res.elSeq;
+					}
+					meanRatio += rapport;
+					std::cout << '\r' <<  std::setw(5) << std::setfill('0') << lap << "/" << combinaisons << std::flush;
+					//1std::cout << '\r' <<  std::setw(3) << std::setfill('0') << (int)(( std::clock() - start ) / (double) CLOCKS_PER_SEC ) << "/" << timeLimit << std::flush;
+					lap++;
+
+				//}while(prefVar.next_permutation(prefs[2].begin(), prefs[2].end()));
+			//}while(prefVar.next_permutation(prefs[1].begin(), prefs[1].end()));
+			}while( (( std::clock() - start ) / (double) CLOCKS_PER_SEC ) < timeLimit );
+
 			std::cout << std::endl;
 			
 			duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
 	        std::cout << "duration : " << duration << std::endl;
+	        std::cout << "lap : " << (lap-1) << std::endl;
 			
 			std::cout << "sequence = ";
 			State::displayVec(seq);
 			//std::cout << "worst socialWelfare = " << socialWelfare << std::endl;
-			meanRatio /= combinaisons;
+			//std::cout << "total mean = " << meanRatio << std::endl;
+			meanRatio /= (lap-1);
 			std::cout << "mean ratio = " << meanRatio << std::endl;
 			std::cout << "---------------------------------------" << std::endl;
 			std::cout << "best ratio = " << bestStrategicDivBySincere << std::endl;
 			displayPrefs(bestPrefs, nbCandidates, nbVoters);
-			std::cout << "winner strategic is candidate "<< bestWinnerStrat << " ---> score = " << bestPrefs[0][bestWinnerStrat] + bestPrefs[1][bestWinnerStrat] << std::endl;
-			std::cout << "winner sincere is candidate "<< bestWinnerSincere << " ---> score = " << bestPrefs[0][bestWinnerSincere] + bestPrefs[1][bestWinnerSincere] << std::endl;
+			strategicSocialWelfare = 0; 
+			sincereSocialWelfare = 0;
+			for (int i = 0; i < nbVoters; ++i)
+			{
+				strategicSocialWelfare += bestPrefs[i][bestWinnerStrat];
+				sincereSocialWelfare += bestPrefs[i][bestWinnerSincere];
+			}
+			std::cout << "winner strategic is candidate "<< bestWinnerStrat << " ---> score = " << strategicSocialWelfare << " candiates' elimination queue : " ;// << std::endl;
+			State::displayVec(bestStrategicSequence);
+			std::cout << "winner sincere is candidate "<< bestWinnerSincere << " ---> score = " << sincereSocialWelfare << " candiates' elimination queue : " ;//std::endl;
+			State::displayVec(bestSincereSequence);
 			std::cout << "---------------------------------------" << std::endl;
 			std::cout << "worst ratio = " << worstStrategicDivBySincere << std::endl;
 			displayPrefs(worstPrefs, nbCandidates, nbVoters);
-			std::cout << "winner strategic is candidate "<< worstWinnerStrat << " ---> score = " << worstPrefs[0][worstWinnerStrat] + worstPrefs[1][worstWinnerStrat] << std::endl;
-			std::cout << "winner sincere is candidate "<< worstWinnerSincere << " ---> score = " << worstPrefs[0][worstWinnerSincere] + worstPrefs[1][worstWinnerSincere] << std::endl;
+			strategicSocialWelfare = 0; 
+			sincereSocialWelfare = 0;
+			for (int i = 0; i < nbVoters; ++i)
+			{
+				strategicSocialWelfare += worstPrefs[i][worstWinnerStrat];
+				sincereSocialWelfare += worstPrefs[i][worstWinnerSincere];
+			}
+			std::cout << "winner strategic is candidate "<< worstWinnerStrat << " ---> score = " << strategicSocialWelfare << " candiates' elimination queue : " ; //<< std::endl;
+			State::displayVec(worstStrategicSequence);
+			std::cout << "winner sincere is candidate "<< worstWinnerSincere << " ---> score = " << sincereSocialWelfare << " candiates' elimination queue : " ; //<< std::endl;
+			State::displayVec(worstSincereSequence);
 			std::cout << "=======================================" << std::endl;
 		
 		}
@@ -501,16 +628,15 @@ int main(){
 
 	else if (CONTEXT=="3")
 	{
-	    int const nbCandidates = 8;
-		int const nbVoters = 2;
+	    int const nbCandidates = 12;
+		int const nbVoters = 4;
 
 		int const nbPrefs = 100000;
-		int const UCTrepeat = 15;
+		int const UCTrepeat = 20;
 
 		std::vector<std::vector<int>> prefs(nbPrefs);
 
 		RandomPrefsGenerate(prefs, nbCandidates, nbPrefs);
-
 
 		StateCentralAuthority etat(nbCandidates, nbVoters, prefs, nbPrefs);
 
@@ -521,16 +647,154 @@ int main(){
 		etat.action(0);
 		for (int j = 1; j < nbCandidates-1; ++j)
 		{
-			std::cout << (j+1) << "/" << nbCandidates-1 << std::endl;
+			std::cout << '\r' <<  std::setw(2) << std::setfill('0') << (j+1) << "/" << nbCandidates-1 << std::flush;
 			int move = mcts.BestMoveUCT(etat, UCTrepeat);
-			std::cout << " - " << std::endl;
 			etat.action(move);
 		}
 
 		std::vector<int> finalSeq = etat.getSequence();
-		etat.displayVec(finalSeq);
-
+		std::cout << "{";
+		for (std::size_t i = 0; i < finalSeq.size(); ++i)
+		{
+			std::cout << finalSeq[i] << ", ";
+		}
+		std::cout << "}" << std::endl;
+		//etat.displayVec(finalSeq);
+		//totalSequence.push_back(finalSeq);
 	}
+	/*else if(CONTEXT=="Find streteyproof sequence")
+	{
+		int const nbCandidates = 12;
+		int const nbVoters = 4;
+		int const nbPrefs = 100000;
+		int const UCTrepeat = 20;
+		std::vector<std::vector<int>> bigPrefs(nbPrefs);
+		int iter = 10;
+		for (int i = 0; i < iter; ++i)
+		{
+			RESTART :
+			std::cout << "start utc" << std::endl;
+			RandomPrefsGenerate(bigPrefs, nbCandidates, nbPrefs);
+			StateCentralAuthority etat(nbCandidates, nbVoters, bigPrefs, nbPrefs);
+			MCTS<StateCentralAuthority> mcts(nbCandidates, nbVoters);
+			etat.action(0);
+			for (int j = 1; j < nbCandidates-1; ++j)
+			{
+				std::cout << '\r' <<  std::setw(2) << std::setfill('0') << (j+1) << "/" << nbCandidates-1 << std::flush;
+				int move = mcts.BestMoveUCT(etat, UCTrepeat);
+				etat.action(move);
+			}
+
+			std::vector<int> finalSeq = etat.getSequence();
+			std::string finalSeqString = "{";
+			for (std::size_t i = 0; i < finalSeq.size(); ++i)
+			{
+				finalSeqString += std::to_string(finalSeq[i]) + ", ";
+			}
+			finalSeqString += "}";
+			std::cout << "Seq = " + finalSeqString << std::endl;
+			
+			//==================================================================================
+			double meanRatio = 0.0;
+			
+			std::clock_t start = std::clock();;
+		    double duration = 0.0;
+
+			StatePreferenceVariation prefVar(nbCandidates, nbVoters);
+
+			std::vector<std::vector<int>> prefs;
+			std::vector<std::vector<int>> worstPrefs;
+			std::vector<std::vector<int>> bestPrefs;
+			std::vector<int> worstElimQueue;
+			std::vector<int> bestElimQueue;
+			int worstWinnerStrat;
+			int bestWinnerStrat;
+			int worstWinnerSincere;
+			int bestWinnerSincere;
+			//std::vector<int> worstSequence;
+			//std::vector<int> bestSequence;
+			std::vector<int> v;
+			for (int i = 0; i < nbCandidates; ++i) v.push_back(i);
+			for (int i = 0; i < nbVoters; ++i) prefs.push_back(v);
+			//prefs[1] = {3,7,4,6,0,1,5,2};
+			int sincereSocialWelfare;
+			int strategicSocialWelfare;
+			double worstStrategicDivBySincere = 100;
+			double bestStrategicDivBySincere = 0;
+			//displayPrefs(prefs, nbCandidates, nbVoters);
+			int combinaisons = factorial(8)*factorial(8);
+			int lap = 1;
+			do{
+					RandomPrefsGenerate(prefs, nbCandidates, nbVoters);
+					StateGivenSequence state(nbCandidates,nbVoters,prefs,finalSeq);
+					MCTS<StateGivenSequence> mcts(nbCandidates, nbVoters, "simple order + simple pruning + cut -1", prefs);
+					tupleResult res = mcts.MAXN(state,std::vector<int>(nbCandidates,-1));
+					StateGivenSequence state2(nbCandidates,nbVoters,prefs,finalSeq);
+					int winner = state2.playout(true);		//true to save eliminationQueue
+
+					strategicSocialWelfare = 0; 
+					sincereSocialWelfare = 0;
+					for (int i = 0; i < nbVoters; ++i)
+					{
+						strategicSocialWelfare += prefs[i][res.winner];
+						sincereSocialWelfare += prefs[i][winner];
+					}
+					double rapport = strategicSocialWelfare/(double)(sincereSocialWelfare);
+					if (rapport < worstStrategicDivBySincere)
+					{
+						std::cout << "rapport = " << rapport;
+						if (rapport<1.0) goto RESTART;
+						worstStrategicDivBySincere = rapport;
+					 	worstWinnerSincere = winner;
+					 	worstWinnerStrat = res.winner;
+					 	worstPrefs = prefs;
+					 	//worstSequence = state2.getEliminationQueue();
+					}
+					if (rapport > bestStrategicDivBySincere)
+					{
+						bestStrategicDivBySincere = rapport;
+					 	bestWinnerSincere = winner;
+					 	bestWinnerStrat = res.winner;
+					 	bestPrefs = prefs;
+					 	//bestSequence = state2.getEliminationQueue();
+					}
+					meanRatio += rapport;
+					//std::cout << '\r' <<  std::setw(10) << std::setfill('0') << lap << "/" << combinaisons << std::flush;
+					std::cout << '\r' <<  std::setw(3) << std::setfill('0') << (int)(( std::clock() - start ) / (double) CLOCKS_PER_SEC ) << "/100" << std::flush;
+					lap++;
+			}while( (( std::clock() - start ) / (double) CLOCKS_PER_SEC ) < 100 );
+
+			std::cout << std::endl;
+			
+			duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+	        std::cout << "duration : " << duration << std::endl;
+	        std::cout << "lap : " << (lap-1) << std::endl;
+			
+			std::cout << "sequence = ";
+			State::displayVec(finalSeq);
+			//std::cout << "worst socialWelfare = " << socialWelfare << std::endl;
+			std::cout << "total mean = " << meanRatio << std::endl;
+			meanRatio /= (lap-1);
+			std::cout << "mean ratio = " << meanRatio << std::endl;
+			std::cout << "---------------------------------------" << std::endl;
+			std::cout << "best ratio = " << bestStrategicDivBySincere << std::endl;
+			displayPrefs(bestPrefs, nbCandidates, nbVoters);
+			std::cout << "winner strategic is candidate "<< bestWinnerStrat << " ---> score = " << bestPrefs[0][bestWinnerStrat] + bestPrefs[1][bestWinnerStrat] << std::endl;
+			std::cout << "winner sincere is candidate "<< bestWinnerSincere << " ---> score = " << bestPrefs[0][bestWinnerSincere] + bestPrefs[1][bestWinnerSincere] << std::endl;
+			//State::displayVec(bestSequence);
+			std::cout << "---------------------------------------" << std::endl;
+			std::cout << "worst ratio = " << worstStrategicDivBySincere << std::endl;
+			displayPrefs(worstPrefs, nbCandidates, nbVoters);
+			std::cout << "winner strategic is candidate "<< worstWinnerStrat << " ---> score = " << worstPrefs[0][worstWinnerStrat] + worstPrefs[1][worstWinnerStrat] << std::endl;
+			std::cout << "winner sincere is candidate "<< worstWinnerSincere << " ---> score = " << worstPrefs[0][worstWinnerSincere] + worstPrefs[1][worstWinnerSincere] << std::endl;
+			//State::displayVec(worstSequence);
+			std::cout << "=======================================" << std::endl;
+			//===========================================================================
+		}
+
+
+	}*/
+
 
 	return 0;
 }
